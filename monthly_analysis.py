@@ -1,8 +1,8 @@
 class MonthlyAnalyzer:
 
 
-    def __init__(self, monthly_data):
-        self.data = monthly_data
+    def __init__(self, data):
+        self.data = data
 
 
 
@@ -12,75 +12,72 @@ class MonthlyAnalyzer:
 
         for item in self.data:
 
-            total += float(
-                item.get("amount",0)
-            )
+            try:
+                total += float(item["amount"])
+            except:
+                pass
 
         return total
 
 
 
-    def product_share(self):
+    def sales_share(self):
 
         total = self.total_sales()
 
         result = []
 
-
         for item in self.data:
 
-            amount = float(
-                item.get("amount",0)
-            )
+            try:
+                amount=float(item["amount"])
+            except:
+                amount=0
 
-            share = 0
+
+            share=0
 
             if total:
-                share = amount / total * 100
+                share=(amount/total)*100
 
 
-            result.append(
-                {
-                    "product":item["name"],
-                    "amount":amount,
-                    "share":round(share,2)
-                }
-            )
+            result.append({
+
+                "name":item["name"],
+                "amount":amount,
+                "share":round(share,2)
+
+            })
 
 
         return result
 
 
 
-    def print_report(self):
+    def report(self):
 
-
-        print("====================")
+        print("===================")
         print("تحلیل فروش ماهانه")
-        print("====================")
-
-
-        total = self.total_sales()
+        print("===================")
 
 
         print(
             "کل فروش:",
-            total,
+            self.total_sales(),
             "میلیون ریال"
         )
 
 
-        print("--------------------")
+        print("-------------------")
 
 
-        for x in self.product_share():
+        for x in self.sales_share():
 
-            print(
-                x["product"],
-                "|",
-                x["amount"],
-                "میلیون ریال",
-                "| سهم:",
-                x["share"],
-                "%"
-            )
+            if x["amount"]>0:
+
+                print(
+                    f'{x["name"]} | '
+                    f'{x["amount"]} '
+                    f'میلیون ریال | '
+                    f'سهم: {x["share"]}%'
+                )
