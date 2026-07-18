@@ -23,6 +23,8 @@ codal = CodalReport(
 
     period="1404 سالانه",
 
+    fiscal_end_date="1406/04/01",
+
     sales=100000,
 
     operating_profit=35000,
@@ -45,7 +47,7 @@ codal_data = codal.get_data()
 
 
 # =========================
-# 2) تبدیل به گزارش مالی
+# 2) تبدیل به FinancialReport
 # =========================
 
 current = convert_codal_to_financial(
@@ -57,6 +59,10 @@ current = convert_codal_to_financial(
 previous = convert_codal_to_financial({
 
     "period": "1403 سالانه",
+
+    "fiscal_end_date": "1405/04/01",
+
+    "months": 12,
 
     "sales": 80000,
 
@@ -95,35 +101,48 @@ quality = ProfitQuality(
 
 quality_score = quality.score()
 
+
 normalized_profit = quality.normalized_profit()
 
 
 
 # =========================
-# 4) روند درآمد غیرعملیاتی
+# 4) تاریخچه درآمد غیرعملیاتی
 # =========================
 
 history = QualityHistory()
 
 
 history.add_period(
+
     "1402",
+
     1000,
+
     0
+
 )
 
 
 history.add_period(
+
     "1403",
+
     1500,
+
     500
+
 )
 
 
 history.add_period(
+
     "1404",
+
     2000,
+
     700
+
 )
 
 
@@ -132,7 +151,7 @@ history.analyze()
 
 
 # =========================
-# 5) دریافت اطلاعات بازار
+# 5) اطلاعات بازار TSETMC
 # =========================
 
 tsetmc = TsetmcAdapter(
@@ -149,7 +168,7 @@ market_data = tsetmc.get_stock_data()
 if not market_data:
 
     raise Exception(
-        "خطا در دریافت اطلاعات TSETMC"
+        "خطا در دریافت اطلاعات بازار"
     )
 
 
@@ -177,10 +196,11 @@ stock = StockAnalyzer(
 )
 
 
-
 stock_data = stock.get_report_data()
 
 
+
+# استفاده از ارزش بازار واقعی TSETMC
 
 stock_data["market_value"] = market_data["market_value"]
 
@@ -226,7 +246,7 @@ fundamental_score = fundamental.calculate()
 
 
 # =========================
-# 9) هشدارها
+# 9) هشدارهای تحلیلی
 # =========================
 
 warning = WarningAnalyzer(
@@ -260,7 +280,9 @@ report = FullReport(
 
     normalized_profit,
 
-    fundamental_score
+    fundamental_score,
+
+    current
 
 )
 

@@ -14,11 +14,16 @@ class FinancialReport:
         non_operating_income=0,
         assets=0,
         equity=0,
-        cash_flow=0
+        cash_flow=0,
+        fiscal_end_date=None
     ):
 
         self.period = period
+
         self.months = months
+
+        self.fiscal_end_date = fiscal_end_date
+
 
         self.sales = sales
 
@@ -27,6 +32,7 @@ class FinancialReport:
         self.net_profit = net_profit
 
         self.non_operating_income = non_operating_income
+
 
         self.assets = assets
 
@@ -66,6 +72,8 @@ class FinancialReport:
     def debt_free_value(self):
 
         return self.assets - self.equity
+
+
 
 
 
@@ -114,34 +122,46 @@ class FinancialHistory:
 
 
         sales_growth = self.change_percent(
+
             current.sales,
+
             previous.sales
+
         )
 
 
         if sales_growth > 0:
+
             score += 2
 
 
 
         operating_growth = self.change_percent(
+
             current.operating_profit,
+
             previous.operating_profit
+
         )
 
 
         if operating_growth > 0:
+
             score += 2
 
 
 
         profit_growth = self.change_percent(
+
             current.net_profit,
+
             previous.net_profit
+
         )
 
 
         if profit_growth > 0:
+
             score += 2
 
 

@@ -6,13 +6,19 @@ class FullReport:
         stock_data,
         profit_quality_score,
         normalized_profit,
-        fundamental_score
+        fundamental_score,
+        financial_report=None
     ):
 
         self.stock_data = stock_data
+
         self.profit_quality_score = profit_quality_score
+
         self.normalized_profit = normalized_profit
+
         self.fundamental_score = fundamental_score
+
+        self.financial_report = financial_report
 
 
 
@@ -27,6 +33,22 @@ class FullReport:
             "نماد:",
             self.stock_data["symbol"]
         )
+
+
+        if self.financial_report:
+
+            print(
+                "دوره مالی:",
+                self.financial_report.period
+            )
+
+
+            if self.financial_report.fiscal_end_date:
+
+                print(
+                    "پایان سال مالی:",
+                    self.financial_report.fiscal_end_date
+                )
 
 
         print("------------------------------")
@@ -99,9 +121,13 @@ class FullReport:
         if self.normalized_profit > 0:
 
             normalized_pe = (
+
                 self.stock_data["market_value"]
+
                 /
+
                 self.normalized_profit
+
             )
 
 

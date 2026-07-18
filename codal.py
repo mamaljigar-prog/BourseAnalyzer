@@ -11,8 +11,10 @@ class CodalReport:
         non_operating_income=0,
         assets=0,
         equity=0,
-        cash_flow=0
+        cash_flow=0,
+        fiscal_end_date=None
     ):
+
 
         self.symbol = symbol
 
@@ -26,11 +28,16 @@ class CodalReport:
 
         self.non_operating_income = non_operating_income
 
+
         self.assets = assets
 
         self.equity = equity
 
         self.cash_flow = cash_flow
+
+
+        # تاریخ پایان سال مالی
+        self.fiscal_end_date = fiscal_end_date
 
 
 
@@ -41,12 +48,18 @@ class CodalReport:
 
             "symbol": self.symbol,
 
+
             "period": self.period,
+
+
+            "fiscal_end_date": self.fiscal_end_date,
 
 
             "sales": self.sales,
 
+
             "operating_profit": self.operating_profit,
+
 
             "net_profit": self.net_profit,
 
@@ -56,7 +69,9 @@ class CodalReport:
 
             "assets": self.assets,
 
+
             "equity": self.equity,
+
 
             "cash_flow": self.cash_flow
 
@@ -83,6 +98,15 @@ class CodalReport:
             "دوره:",
             self.period
         )
+
+
+        if self.fiscal_end_date:
+
+            print(
+                "پایان سال مالی:",
+                self.fiscal_end_date
+            )
+
 
 
         print(
