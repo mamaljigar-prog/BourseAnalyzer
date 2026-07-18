@@ -14,7 +14,7 @@ from tsetmc_adapter import TsetmcAdapter
 
 
 # =========================
-# 1) دریافت گزارش کدال
+# 1) گزارش مالی کدال
 # =========================
 
 codal = CodalReport(
@@ -29,7 +29,13 @@ codal = CodalReport(
 
     net_profit=30000,
 
-    non_operating_income=7000
+    non_operating_income=7000,
+
+    assets=93000,
+
+    equity=50000,
+
+    cash_flow=25000
 
 )
 
@@ -39,13 +45,11 @@ codal_data = codal.get_data()
 
 
 # =========================
-# 2) تبدیل به FinancialReport
+# 2) تبدیل به گزارش مالی
 # =========================
 
 current = convert_codal_to_financial(
-
     codal_data
-
 )
 
 
@@ -60,14 +64,20 @@ previous = convert_codal_to_financial({
 
     "net_profit": 22000,
 
-    "non_operating_income": 3000
+    "non_operating_income": 3000,
+
+    "assets": 90000,
+
+    "equity": 48000,
+
+    "cash_flow": 20000
 
 })
 
 
 
 # =========================
-# 3) تحلیل کیفیت سود
+# 3) کیفیت سود
 # =========================
 
 quality = ProfitQuality(
@@ -85,13 +95,12 @@ quality = ProfitQuality(
 
 quality_score = quality.score()
 
-
 normalized_profit = quality.normalized_profit()
 
 
 
 # =========================
-# 4) تاریخچه درآمد غیرعملیاتی
+# 4) روند درآمد غیرعملیاتی
 # =========================
 
 history = QualityHistory()
@@ -123,15 +132,18 @@ history.analyze()
 
 
 # =========================
-# 5) دریافت اطلاعات بازار TSETMC
+# 5) دریافت اطلاعات بازار
 # =========================
 
 tsetmc = TsetmcAdapter(
+
     "20562694899904339"
+
 )
 
 
 market_data = tsetmc.get_stock_data()
+
 
 
 if not market_data:
@@ -143,7 +155,7 @@ if not market_data:
 
 
 # =========================
-# 6) تحلیل ارزش گذاری
+# 6) ارزش گذاری
 # =========================
 
 stock = StockAnalyzer(
@@ -158,18 +170,17 @@ stock = StockAnalyzer(
 
     profit_forecast=current.net_profit,
 
-    assets=200000,
+    assets=current.assets,
 
-    equity=120000
+    equity=current.equity
 
 )
+
 
 
 stock_data = stock.get_report_data()
 
 
-
-# جایگزینی ارزش بازار واقعی TSETMC
 
 stock_data["market_value"] = market_data["market_value"]
 
@@ -215,7 +226,7 @@ fundamental_score = fundamental.calculate()
 
 
 # =========================
-# 9) هشدارهای تحلیلی
+# 9) هشدارها
 # =========================
 
 warning = WarningAnalyzer(

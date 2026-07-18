@@ -17,7 +17,25 @@ def convert_codal_to_financial(codal_data):
 
         net_profit=codal_data["net_profit"],
 
-        non_operating_income=codal_data["non_operating_income"]
+        non_operating_income=codal_data.get(
+            "non_operating_income",
+            0
+        ),
+
+        assets=codal_data.get(
+            "assets",
+            0
+        ),
+
+        equity=codal_data.get(
+            "equity",
+            0
+        ),
+
+        cash_flow=codal_data.get(
+            "cash_flow",
+            0
+        )
 
     )
 

@@ -11,15 +11,29 @@ class FinancialReport:
         sales,
         operating_profit,
         net_profit,
-        non_operating_income=0
+        non_operating_income=0,
+        assets=0,
+        equity=0,
+        cash_flow=0
     ):
 
         self.period = period
         self.months = months
+
         self.sales = sales
+
         self.operating_profit = operating_profit
+
         self.net_profit = net_profit
+
         self.non_operating_income = non_operating_income
+
+        self.assets = assets
+
+        self.equity = equity
+
+        self.cash_flow = cash_flow
+
 
 
     def net_margin(self):
@@ -49,6 +63,12 @@ class FinancialReport:
 
 
 
+    def debt_free_value(self):
+
+        return self.assets - self.equity
+
+
+
 class FinancialHistory:
 
 
@@ -67,10 +87,10 @@ class FinancialHistory:
     def change_percent(self, current, previous):
 
         if previous == 0:
+
             return 0
 
         return ((current - previous) / previous) * 100
-
 
 
 
@@ -79,19 +99,19 @@ class FinancialHistory:
         if len(self.reports) < 2:
 
             print("گزارش کافی نیست")
-            return
+
+            return 0
 
 
 
         previous = self.reports[-2]
+
         current = self.reports[-1]
 
 
         score = 0
 
 
-
-        # رشد فروش
 
         sales_growth = self.change_percent(
             current.sales,
@@ -104,8 +124,6 @@ class FinancialHistory:
 
 
 
-        # رشد سود عملیاتی
-
         operating_growth = self.change_percent(
             current.operating_profit,
             previous.operating_profit
@@ -116,8 +134,6 @@ class FinancialHistory:
             score += 2
 
 
-
-        # رشد سود خالص
 
         profit_growth = self.change_percent(
             current.net_profit,
@@ -130,15 +146,11 @@ class FinancialHistory:
 
 
 
-        # بهبود حاشیه سود
-
         if current.net_margin() > previous.net_margin():
 
             score += 2
 
 
-
-        # کیفیت سود
 
         if current.non_operating_ratio() < 0.3:
 
@@ -146,20 +158,4 @@ class FinancialHistory:
 
 
 
-        print("----------------")
-        print("امتیاز بنیادی:", score, "از 10")
-
-
-        if score >= 8:
-
-            print("🟢 وضعیت بنیادی مناسب")
-
-
-        elif score >= 5:
-
-            print("🟡 نیازمند بررسی")
-
-
-        else:
-
-            print("🔴 وضعیت بنیادی ضعیف")
+        return score
