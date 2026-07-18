@@ -9,18 +9,19 @@ class TsetmcAdapter:
 
     def format_money(self, value):
 
-        # تومان به همت (هزار میلیارد تومان)
-        hamat = value / 1_000_000_000_000
+        # value بر حسب میلیارد تومان است
+        if value >= 1000:
 
-        if hamat >= 1000:
-            return f"{hamat/1000:.1f} تریلیون تومان"
+            return f"{value:,.0f} میلیارد تومان"
 
-        return f"{hamat:,.0f} همت"
+        return f"{value:,.0f} میلیارد تومان"
+
 
 
     def get_stock_data(self):
 
         info = get_instrument(self.ins_code)
+
         price = get_price(self.ins_code)
 
 
@@ -28,17 +29,25 @@ class TsetmcAdapter:
             return None
 
 
-        # قیمت TSETMC ریال است
-        # تبدیل ارزش بازار به تومان
+
+        # TSETMC:
+        # قیمت به ریال است
+        # خروجی پروژه: میلیارد تومان
 
         market_value = (
+
             info["shares"]
+
             *
+
             price["closing_price"]
-        ) / 10
+
+        ) / 10 / 1_000_000_000
+
 
 
         return {
+
 
             "symbol": info["symbol"],
 
@@ -48,15 +57,21 @@ class TsetmcAdapter:
 
             "market": info["market"],
 
+
             "last_price": price["last_price"],
 
             "closing_price": price["closing_price"],
 
             "volume": price["volume"],
 
+
+            # میلیارد تومان
+
             "market_value": market_value,
+
 
             "market_value_text": self.format_money(
                 market_value
             )
+
         }

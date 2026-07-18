@@ -9,6 +9,8 @@ from full_report import FullReport
 
 from warning import WarningAnalyzer
 
+from tsetmc_adapter import TsetmcAdapter
+
 
 
 # =========================
@@ -96,35 +98,23 @@ history = QualityHistory()
 
 
 history.add_period(
-
     "1402",
-
     1000,
-
     0
-
 )
 
 
 history.add_period(
-
     "1403",
-
     1500,
-
     500
-
 )
 
 
 history.add_period(
-
     "1404",
-
     2000,
-
     700
-
 )
 
 
@@ -133,16 +123,36 @@ history.analyze()
 
 
 # =========================
-# 5) اطلاعات بازار
+# 5) دریافت اطلاعات بازار TSETMC
+# =========================
+
+tsetmc = TsetmcAdapter(
+    "20562694899904339"
+)
+
+
+market_data = tsetmc.get_stock_data()
+
+
+if not market_data:
+
+    raise Exception(
+        "خطا در دریافت اطلاعات TSETMC"
+    )
+
+
+
+# =========================
+# 6) تحلیل ارزش گذاری
 # =========================
 
 stock = StockAnalyzer(
 
-    symbol="شپدیس",
+    symbol=market_data["symbol"],
 
-    price=11310,
+    price=market_data["closing_price"],
 
-    shares=233572772000,
+    shares=market_data["shares"],
 
     sales_forecast=current.sales,
 
@@ -159,8 +169,14 @@ stock_data = stock.get_report_data()
 
 
 
+# جایگزینی ارزش بازار واقعی TSETMC
+
+stock_data["market_value"] = market_data["market_value"]
+
+
+
 # =========================
-# 6) P/E نرمال شده
+# 7) P/E نرمال شده
 # =========================
 
 pe_normalized = (
@@ -176,7 +192,7 @@ pe_normalized = (
 
 
 # =========================
-# 7) امتیاز بنیادی
+# 8) امتیاز بنیادی
 # =========================
 
 fundamental = FundamentalScore(
@@ -199,7 +215,7 @@ fundamental_score = fundamental.calculate()
 
 
 # =========================
-# 8) هشدارهای تحلیلی
+# 9) هشدارهای تحلیلی
 # =========================
 
 warning = WarningAnalyzer(
@@ -222,7 +238,7 @@ warning.show()
 
 
 # =========================
-# 9) گزارش نهایی
+# 10) گزارش نهایی
 # =========================
 
 report = FullReport(
