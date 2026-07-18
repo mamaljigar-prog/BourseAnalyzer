@@ -1,29 +1,30 @@
 from tsetmc_adapter import TsetmcAdapter
 
 
-
-stock = TsetmcAdapter(
-
-    "شپدیس"
-
-)
+ins_code = "20562694899904339"
 
 
-
-data = stock.get_stock_data()
-
+adapter = TsetmcAdapter(ins_code)
 
 
-print("----------------")
+data = adapter.get_stock_data()
 
-print("نماد:", data["symbol"])
 
-print("شرکت:", data["company"])
+if data:
 
-print("تعداد سهام:", data["shares"])
+    print("----------------")
+    print("نماد:", data["symbol"])
+    print("شرکت:", data["company"])
+    print("تعداد سهام:", data["shares"])
+    print("قیمت پایانی:", data["closing_price"])
 
-print("قیمت پایانی:", data["closing_price"])
+    print(
+        "ارزش بازار:",
+        data["market_value_text"]
+    )
 
-print("ارزش بازار:", data["market_value"])
+    print("----------------")
 
-print("----------------")
+else:
+
+    print("خطا در دریافت اطلاعات")

@@ -1,54 +1,62 @@
-from tsetmc import Tsetmc
-
+from tsetmc import get_instrument, get_price
 
 
 class TsetmcAdapter:
 
+    def __init__(self, ins_code):
+        self.ins_code = ins_code
 
-    def __init__(self, symbol):
 
-        self.symbol = symbol
+    def format_money(self, value):
 
+        # تومان به همت (هزار میلیارد تومان)
+        hamat = value / 1_000_000_000_000
+
+        if hamat >= 1000:
+            return f"{hamat/1000:.1f} تریلیون تومان"
+
+        return f"{hamat:,.0f} همت"
 
 
     def get_stock_data(self):
 
-
-        tsetmc = Tsetmc(self.symbol)
-
-
-        data = tsetmc.get_data()
+        info = get_instrument(self.ins_code)
+        price = get_price(self.ins_code)
 
 
-
-        result = {
-
-            "symbol": data["symbol"],
-
-            "company": data["company"],
-
-            "shares": data["shares"],
-
-            "market": data["market"],
-
-            "last_price": data["last_price"],
-
-            "closing_price": data["closing_price"]
-
-        }
+        if not info or not price:
+            return None
 
 
+        # قیمت TSETMC ریال است
+        # تبدیل ارزش بازار به تومان
 
-        result["market_value"] = (
-
-            result["shares"]
-
+        market_value = (
+            info["shares"]
             *
-
-            result["closing_price"]
-
-        )
+            price["closing_price"]
+        ) / 10
 
 
+        return {
 
-        return result
+            "symbol": info["symbol"],
+
+            "company": info["company"],
+
+            "shares": info["shares"],
+
+            "market": info["market"],
+
+            "last_price": price["last_price"],
+
+            "closing_price": price["closing_price"],
+
+            "volume": price["volume"],
+
+            "market_value": market_value,
+
+            "market_value_text": self.format_money(
+                market_value
+            )
+        }
