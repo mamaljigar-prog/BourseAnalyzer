@@ -1,51 +1,113 @@
-def market_cap_toman(price_rial, shares):
-    """
-    ارزش بازار به میلیارد تومان
+# valuation.py
 
-    قیمت TSETMC به ریال است
-    """
+def calculate_valuation(
+        market_cap,
+        forecast_sales,
+        forecast_profit,
+        assets,
+        equity
+):
 
-    market_cap_rial = price_rial * shares
-
-    market_cap_toman = market_cap_rial / 10
-
-    market_cap_billion = market_cap_toman / 1_000_000_000
-
-    return market_cap_billion
+    result = {}
 
 
-
-def forward_profit(sales_billion_toman, net_margin):
-    """
-    سود خالص پیش بینی شده
-    فروش × حاشیه سود خالص
-    """
-
-    return sales_billion_toman * net_margin
+    # P/E Forward
+    if forecast_profit:
+        result["P/E Forward"] = (
+            market_cap / forecast_profit
+        )
+    else:
+        result["P/E Forward"] = None
 
 
 
-def forward_pe(market_cap_billion, profit_billion):
-    """
-    P/E Forward
-    """
-
-    return market_cap_billion / profit_billion
-
-
-
-def forward_ps(market_cap_billion, sales_billion):
-    """
-    P/S Forward
-    """
-
-    return market_cap_billion / sales_billion
+    # P/S Forward
+    if forecast_sales:
+        result["P/S Forward"] = (
+            market_cap / forecast_sales
+        )
+    else:
+        result["P/S Forward"] = None
 
 
 
-def future_value_by_pe(profit_billion, pe=7):
-    """
-    ارزش بازار آینده با PE مبنا
-    """
+    # P/A
+    if assets:
+        result["P/A"] = (
+            market_cap / assets
+        )
+    else:
+        result["P/A"] = None
 
-    return profit_billion * pe
+
+
+    # P/B
+    if equity:
+        result["P/B"] = (
+            market_cap / equity
+        )
+    else:
+        result["P/B"] = None
+
+
+
+    # حاشیه سود خالص
+    if forecast_sales:
+        result["Net Margin %"] = (
+            forecast_profit /
+            forecast_sales * 100
+        )
+    else:
+        result["Net Margin %"] = None
+
+
+    return result
+
+
+
+# تست اولیه
+if __name__ == "__main__":
+
+
+    # نمونه بنیرو (اعداد میلیارد تومان)
+
+    market_cap = 8735
+
+    forecast_sales = 6824
+
+    forecast_profit = 2399
+
+    assets = 10900
+
+    equity = 6800
+
+
+
+    data = calculate_valuation(
+        market_cap,
+        forecast_sales,
+        forecast_profit,
+        assets,
+        equity
+    )
+
+
+    print("===================")
+    print("VALUATION REPORT")
+    print("===================")
+
+
+    for key, value in data.items():
+
+        if value is not None:
+            print(
+                key,
+                ":",
+                round(value,2)
+            )
+
+        else:
+            print(
+                key,
+                ": اطلاعات کافی نیست"
+            )
