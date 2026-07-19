@@ -1,124 +1,53 @@
-from valuation import (
-    market_cap_toman,
-    forward_pe,
-    forward_ps,
-    future_value_by_pe
-)
-
+from valuation.valuation_model import calculate_valuation
 
 
 class StockAnalyzer:
 
-
     def __init__(
         self,
         symbol,
-        price,
-        shares,
-        sales_forecast,
-        profit_forecast,
+        market_cap,
+        sales,
+        profit,
         assets,
         equity
     ):
 
         self.symbol = symbol
-        self.price = price
-        self.shares = shares
-        self.sales_forecast = sales_forecast
-        self.profit_forecast = profit_forecast
+        self.market_cap = market_cap
 
-        # اطلاعات ترازنامه
+        self.sales = sales
+        self.profit = profit
+
         self.assets = assets
         self.equity = equity
 
 
+    def report(self):
 
-    def market_value(self):
-
-        return market_cap_toman(
-            self.price,
-            self.shares
+        result = calculate_valuation(
+            market_cap=self.market_cap,
+            forecast_sales=self.sales,
+            forecast_profit=self.profit,
+            equity=self.equity,
+            assets=self.assets
         )
-
-
-
-    def pe_forward(self):
-
-        return forward_pe(
-            self.market_value(),
-            self.profit_forecast
-        )
-
-
-
-    def ps_forward(self):
-
-        return forward_ps(
-            self.market_value(),
-            self.sales_forecast
-        )
-
-
-
-    def pb(self):
-
-        if self.equity == 0:
-            return 0
-
-        return self.market_value() / self.equity
-
-
-
-    def pa(self):
-
-        if self.assets == 0:
-            return 0
-
-        return self.market_value() / self.assets
-
-
-
-    def future_market_value(self):
-
-        return future_value_by_pe(
-            self.profit_forecast,
-            7
-        )
-
-
-
-    def upside(self):
-
-        return (
-            (self.future_market_value() - self.market_value())
-            /
-            self.market_value()
-        ) * 100
-
-
-
-    def get_report_data(self):
 
         return {
 
             "symbol": self.symbol,
 
-            "market_value": self.market_value(),
+            "market_value": self.market_cap,
 
-            "sales": self.sales_forecast,
+            "forecast_sales": self.sales,
 
-            "profit": self.profit_forecast,
+            "forecast_profit": self.profit,
 
-            "pe": self.pe_forward(),
+            "PE": result["PE"],
 
-            "ps": self.ps_forward(),
+            "PS": result["PS"],
 
-            "pb": self.pb(),
+            "PB": result["PB"],
 
-            "pa": self.pa(),
-
-            "future_value": self.future_market_value(),
-
-            "upside": self.upside()
-
+            "PA": result["PA"]
         }

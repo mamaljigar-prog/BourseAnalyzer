@@ -1,32 +1,14 @@
-from forecast import *
+from forecast.profit_forecast import ProfitForecast
 
 
-sales = 143134988
+forecast = ProfitForecast(
 
-margin = 65862967 / sales
+    sales=143134988,
+    net_profit=65862967,
 
-
-future_sales = forecast_sales(
-    sales,
-    0.25
+    # مثلا گزارش 9 ماهه
+    months_passed=9
 )
 
 
-future_profit = forecast_profit(
-    future_sales,
-    margin
-)
-
-
-ratios = forward_ratios(
-    8735000,
-    future_sales,
-    future_profit
-)
-
-
-print("فروش پیش بینی:", future_sales)
-print("سود پیش بینی:", future_profit)
-
-for k,v in ratios.items():
-    print(k,":",v)
+forecast.report()

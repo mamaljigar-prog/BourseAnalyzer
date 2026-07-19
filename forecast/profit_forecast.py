@@ -4,7 +4,7 @@ class ProfitForecast:
         self,
         sales,
         net_profit,
-        months_passed
+        months_passed=12
     ):
         self.sales = sales
         self.net_profit = net_profit
@@ -36,8 +36,10 @@ class ProfitForecast:
     def forecast_net_profit(self):
 
         return round(
-            self.forecast_sales() *
-            self.net_margin() /
+            self.forecast_sales()
+            *
+            self.net_margin()
+            /
             100,
             2
         )
@@ -46,9 +48,15 @@ class ProfitForecast:
     def report(self):
 
         return {
+
             "current_sales": self.sales,
+
             "forecast_sales": self.forecast_sales(),
+
             "current_profit": self.net_profit,
+
             "forecast_profit": self.forecast_net_profit(),
+
             "net_margin": self.net_margin()
+
         }
