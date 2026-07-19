@@ -1,29 +1,42 @@
 # integrated_report.py
 
+
 from tsetmc_data import get_tsetmc_data
+
 from financial_data import get_financial_data
+
+from valuation_model import calculate_valuation
+
 from forecast import (
     forecast_sales,
     forecast_profit,
     forward_valuation
 )
-from valuation_model import calculate_valuation
+
+from growth_model import sales_growth
+
 
 
 
 def main():
 
-    # کد خراسان
+
+    # خراسان
+
     ins_code = "43552974795606067"
 
 
-    # دریافت اطلاعات بازار
+
+    # اطلاعات بازار
+
     market = get_tsetmc_data(
         ins_code
     )
 
 
-    # دریافت اطلاعات مالی کدال
+
+    # اطلاعات مالی
+
     financial = get_financial_data()
 
 
@@ -46,15 +59,41 @@ def main():
 
 
 
-    # پیش بینی فروش
+    # ======================
+    # محاسبه رشد فروش
+    # ======================
 
-    growth_rate = 0.25   # فعلا تستی
 
-    margin = (
-        financial["net_profit"]
-        /
-        financial["sales"]
+    growth_percent = sales_growth(
+
+        financial["sales"],
+
+        financial["previous_sales"]
+
     )
+
+
+    growth_rate = growth_percent / 100
+
+
+
+    # حاشیه سود
+
+    net_margin = (
+
+        financial["net_profit"]
+
+        /
+
+        financial["sales"]
+
+    )
+
+
+
+    # ======================
+    # Forecast
+    # ======================
 
 
     forecast_sales_value = forecast_sales(
@@ -66,15 +105,18 @@ def main():
     )
 
 
+
     forecast_profit_value = forecast_profit(
 
         forecast_sales_value,
 
-        margin
+        net_margin
 
     )
 
 
+
+    # تبدیل به میلیارد تومان
 
     forward = forward_valuation(
 
@@ -88,9 +130,17 @@ def main():
 
 
 
+    # ======================
+    # گزارش
+    # ======================
+
+
     print("======================")
+
     print("گزارش نهایی خراسان")
+
     print("======================")
+
 
 
     print(
@@ -108,6 +158,7 @@ def main():
     print("----------------------")
 
 
+
     print(
         "ارزش بازار:",
         round(
@@ -121,37 +172,61 @@ def main():
     print("----------------------")
 
 
+
     print(
         "فروش فعلی:",
         round(
-            financial["sales"]/10000,
+            financial["sales"] / 10000,
             2
         ),
         "میلیارد تومان"
     )
+
+
+
+    print(
+        "فروش سال قبل:",
+        round(
+            financial["previous_sales"] / 10000,
+            2
+        ),
+        "میلیارد تومان"
+    )
+
+
+
+    print(
+        "رشد فروش:",
+        growth_percent,
+        "%"
+    )
+
 
 
     print(
         "فروش پیش بینی:",
         round(
-            forecast_sales_value/10000,
+            forecast_sales_value / 10000,
             2
         ),
         "میلیارد تومان"
     )
+
 
 
     print(
         "سود پیش بینی:",
         round(
-            forecast_profit_value/10000,
+            forecast_profit_value / 10000,
             2
         ),
         "میلیارد تومان"
     )
 
 
+
     print("----------------------")
+
 
 
     print(
@@ -166,10 +241,12 @@ def main():
     )
 
 
+
     print(
         "P/B:",
         valuation["PB"]
     )
+
 
 
     print(
@@ -178,7 +255,9 @@ def main():
     )
 
 
+
     print("----------------------")
+
 
 
     print(
@@ -188,9 +267,26 @@ def main():
     )
 
 
+    print(
+        "ROA:",
+        valuation["ROA"],
+        "%"
+    )
+
+
+    print(
+        "ROE:",
+        valuation["ROE"],
+        "%"
+    )
+
+
+
     print("======================")
 
 
 
+
 if __name__ == "__main__":
+
     main()
