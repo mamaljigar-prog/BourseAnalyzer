@@ -2,6 +2,4 @@
 __pycache__/
 *.pyc
 *.bin
-*.xlsx
-*.csv
 codal_output.bin
