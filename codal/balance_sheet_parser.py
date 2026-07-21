@@ -1,19 +1,19 @@
-import requests
 import json
+import requests
 
 
 class BalanceSheetParser:
 
     def __init__(self, url):
-
         self.url = url
 
         self.headers = {
-            "User-Agent": "Mozilla/5.0"
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "fa-IR,fa;q=0.9,en;q=0.8",
         }
 
-
-    def extract_sheets(self):
+    def extract_datasource(self):
 
         response = requests.get(
             self.url,
@@ -21,205 +21,446 @@ class BalanceSheetParser:
             timeout=30
         )
 
-        text = response.text
+        response.raise_for_status()
 
+        html = response.text
 
-        # پیدا کردن داده JSON گزارش
-        markers = [
-            '"sheets":',
-            'var sheets =',
-            '"sheet":'
-        ]
+        marker = "var datasource ="
 
-        start = -1
-
-        for m in markers:
-
-            start = text.find(m)
-
-            if start != -1:
-                start += len(m)
-                break
-
+        start = html.find(marker)
 
         if start == -1:
 
-            return []
+            marker = "var datasource="
 
+            start = html.find(marker)
 
-        while start < len(text) and text[start] != '[':
+        if start == -1:
 
-            start += 1
-
-
-        if start >= len(text):
-
-            return []
-
-
-        count = 0
-        end = None
-
-
-        for i in range(start, len(text)):
-
-            if text[i] == '[':
-
-                count += 1
-
-
-            elif text[i] == ']':
-                
-                count -= 1
-
-
-            if count == 0:
-
-                end = i + 1
-                break
-
-
-
-        if not end:
-
-            return []
-
-
-        try:
-
-            return json.loads(
-                text[start:end]
+            raise ValueError(
+                "Datasource not found"
             )
 
-        except Exception:
+        json_start = html.find(
+            "{",
+            start
+        )
 
-            return []
+        if json_start == -1:
 
+            raise ValueError(
+                "Datasource JSON not found"
+            )
 
+        decoder = json.JSONDecoder()
 
-    def get_balance_data(self):
+        datasource, _ = decoder.raw_decode(
+            html[json_start:]
+        )
 
+        return datasource
 
-        sheets = self.extract_sheets()
+    def extract_sheets(self):
 
+        datasource = self.extract_datasource()
 
-        assets = 0
-        equity = 0
+        return datasource.get(
+            "sheets",
+            []
+        )
 
+    def normalize(self, value):
 
+        if value is None:
 
-        for sheet in sheets:
+            return ""
 
+        text = str(value)
 
-            title = sheet.get(
-                "title_Fa",
+        invisible_chars = [
+            "\u200b",
+            "\u200c",
+            "\u200d",
+            "\u200e",
+            "\u200f",
+            "\ufeff",
+        ]
+
+        for char in invisible_chars:
+
+            text = text.replace(
+                char,
                 ""
             )
 
+        text = text.replace(
+            "ي",
+            "ی"
+        )
 
-            if "صورت وضعیت مالی" not in title:
+        text = text.replace(
+            "ى",
+            "ی"
+        )
 
-                continue
+        text = text.replace(
+            "ك",
+            "ک"
+        )
 
+        text = " ".join(
+            text.split()
+        )
 
+        return text.strip()
 
-            for table in sheet.get(
-                "tables",
-                []
-            ):
+    def parse_number(self, value):
 
+        if value is None:
 
-                cells = table.get(
-                    "cells",
-                    []
+            return 0
+
+        text = str(value).strip()
+
+        if not text:
+
+            return 0
+
+        translation = str.maketrans(
+            "۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩",
+            "01234567890123456789"
+        )
+
+        text = text.translate(
+            translation
+        )
+
+        text = (
+            text
+            .replace(",", "")
+            .replace("٬", "")
+            .replace(" ", "")
+        )
+
+        try:
+
+            return int(
+                float(text)
+            )
+
+        except (
+            ValueError,
+            TypeError
+        ):
+
+            return 0
+
+    def find_balance_sheet(
+        self,
+        sheets
+    ):
+
+        for sheet in sheets:
+
+            title_fa = self.normalize(
+                sheet.get(
+                    "title_Fa",
+                    ""
+                )
+            )
+
+            title_en = self.normalize(
+                sheet.get(
+                    "title_En",
+                    ""
+                )
+            ).lower()
+
+            if title_fa in [
+                "صورت وضعیت مالی",
+                "صورت وضعيت مالي",
+            ]:
+
+                return sheet
+
+            if title_en == "balance sheet":
+
+                return sheet
+
+        return None
+
+    def get_balance_table(
+        self,
+        balance_sheet
+    ):
+
+        tables = balance_sheet.get(
+            "tables",
+            []
+        )
+
+        if not tables:
+
+            return None
+
+        return tables[0]
+
+    def get_cell_value(
+        self,
+        cells,
+        address
+    ):
+
+        for cell in cells:
+
+            if cell.get(
+                "address"
+            ) == address:
+
+                return self.parse_number(
+                    cell.get(
+                        "value"
+                    )
                 )
 
+        return 0
 
+    def get_cell_text(
+        self,
+        cells,
+        address
+    ):
 
-                for cell in cells:
+        for cell in cells:
 
+            if cell.get(
+                "address"
+            ) == address:
 
-                    value = str(
-                        cell.get(
-                            "value",
-                            ""
-                        )
+                return self.normalize(
+                    cell.get(
+                        "value",
+                        ""
                     )
+                )
 
+        return ""
 
+    def get_balance_data(self):
 
-                    if "جمع دارایی" in value:
+        sheets = self.extract_sheets()
 
+        balance_sheet = self.find_balance_sheet(
+            sheets
+        )
 
-                        row = cell.get(
-                            "rowCode"
-                        )
+        if balance_sheet is None:
 
+            print(
+                "Balance sheet not found"
+            )
 
-                        for c in cells:
+            return {
+                "assets": 0,
+                "equity": 0,
+                "liabilities": 0,
+                "total": 0,
+                "balanced": False
+            }
 
+        table = self.get_balance_table(
+            balance_sheet
+        )
 
-                            if (
-                                c.get("rowCode") == row
-                                and c.get("address","").startswith("B")
-                            ):
+        if table is None:
 
-                                try:
+            print(
+                "Balance sheet table not found"
+            )
 
-                                    assets = int(
-                                        c.get("value")
-                                    )
+            return {
+                "assets": 0,
+                "equity": 0,
+                "liabilities": 0,
+                "total": 0,
+                "balanced": False
+            }
 
-                                except:
+        cells = table.get(
+            "cells",
+            []
+        )
 
-                                    pass
+        # -------------------------------------------------
+        # ستون B = جدیدترین دوره مالی
+        #
+        # آدرس‌های تأییدشده از ساختار JSON کدال:
+        #
+        # B22 = جمع دارایی‌ها
+        # B35 = جمع حقوق مالکانه
+        # B53 = جمع بدهی‌ها
+        # B54 = جمع حقوق مالکانه و بدهی‌ها
+        # -------------------------------------------------
 
+        assets = self.get_cell_value(
+            cells,
+            "B22"
+        )
 
+        equity = self.get_cell_value(
+            cells,
+            "B35"
+        )
 
+        liabilities = self.get_cell_value(
+            cells,
+            "B53"
+        )
 
-                    if (
-                        "حقوق مالکانه" in value
-                        or
-                        "حقوق مالکین" in value
-                    ):
+        total = self.get_cell_value(
+            cells,
+            "B54"
+        )
 
+        # -------------------------------------------------
+        # متن ردیف‌ها برای کنترل
+        # -------------------------------------------------
 
-                        row = cell.get(
-                            "rowCode"
-                        )
+        assets_label = self.get_cell_text(
+            cells,
+            "A22"
+        )
 
+        equity_label = self.get_cell_text(
+            cells,
+            "A35"
+        )
 
-                        for c in cells:
+        liabilities_label = self.get_cell_text(
+            cells,
+            "A53"
+        )
 
+        total_label = self.get_cell_text(
+            cells,
+            "A54"
+        )
 
-                            if (
-                                c.get("rowCode") == row
-                                and c.get("address","").startswith("B")
-                            ):
+        # -------------------------------------------------
+        # کنترل تراز حسابداری
+        # -------------------------------------------------
 
-                                try:
+        equity_plus_liabilities = (
+            equity
+            +
+            liabilities
+        )
 
-                                    equity = int(
-                                        c.get("value")
-                                    )
+        balanced = (
+            assets != 0
+            and
+            equity != 0
+            and
+            liabilities != 0
+            and
+            total != 0
+            and
+            assets == total
+            and
+            equity_plus_liabilities == total
+        )
 
-                                except:
+        print()
 
-                                    pass
+        print(
+            "Balance Sheet Data:"
+        )
 
+        print(
+            "Assets:",
+            assets
+        )
 
+        print(
+            "Equity:",
+            equity
+        )
+
+        print(
+            "Liabilities:",
+            liabilities
+        )
+
+        print(
+            "Equity + Liabilities:",
+            total
+        )
+
+        print(
+            "Calculated Equity + Liabilities:",
+            equity_plus_liabilities
+        )
+
+        print(
+            "Balanced:",
+            balanced
+        )
+
+        print()
+
+        print(
+            "Detected Labels:"
+        )
+
+        print(
+            "A22:",
+            assets_label
+        )
+
+        print(
+            "A35:",
+            equity_label
+        )
+
+        print(
+            "A53:",
+            liabilities_label
+        )
+
+        print(
+            "A54:",
+            total_label
+        )
 
         return {
-
             "assets": assets,
-
-            "equity": equity
-
+            "equity": equity,
+            "liabilities": liabilities,
+            "total": total,
+            "balanced": balanced
         }
-
 
 
 if __name__ == "__main__":
 
+    url = (
+        "https://codal.ir/Reports/Decision.aspx?"
+        "LetterSerial=OOObOOOaNGDL045HqC0wNGueH5Hw%3d%3d"
+        "&rt=0"
+        "&let=6"
+        "&ct=0"
+        "&ft=-1"
+        "&sheetId=0"
+    )
 
-    print("Balance Sheet Parser Test")
+    parser = BalanceSheetParser(
+        url
+    )
+
+    result = parser.get_balance_data()
+
+    print()
+
+    print(
+        result
+    )
