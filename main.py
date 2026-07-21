@@ -1,9 +1,12 @@
-from company import Company
+from models.company import Company
 
 from tsetmc.tsetmc_adapter import TSETMCAdapter
 from tsetmc.tsetmc_market import MarketData
 
+from codal.financial_adapter import FinancialAdapter
+
 from valuation.valuation_model import calculate_valuation
+
 
 
 def main():
@@ -19,18 +22,48 @@ def main():
 
     ins_code = "43552974795606067"
 
+
     api = TSETMCAdapter()
 
-    closing = api.get_closing_price(ins_code)
 
-    info = api.get_instrument_info(ins_code)
+    closing = api.get_closing_price(
+        ins_code
+    )
+
+
+    info = api.get_instrument_info(
+        ins_code
+    )
+
 
     market = MarketData(
         closing,
         info
     )
 
+
     live = market.report()
+
+
+
+    # ==========================
+    # CODAL DATA
+    # ==========================
+
+    codal_url = (
+        "https://codal.ir/Reports/Decision.aspx?"
+        "LetterSerial=OOObOOOaNGDL045HqC0wNGueH5Hw%3d%3d"
+        "&rt=0&let=6&ct=0&ft=-1&sheetId=1"
+    )
+
+
+    financial = FinancialAdapter(
+        codal_url
+    )
+
+
+    data = financial.report()
+
 
 
     # ==========================
@@ -39,24 +72,30 @@ def main():
 
     company = Company(
 
-        symbol=live["symbol"],
-
         name="پتروشیمی خراسان",
 
-        sales=143134988,
+        symbol=live["symbol"],
 
-        net_profit=65862967,
+        sales=data["sales"],
+
+        operating_profit=data["operating_profit"],
+
+        net_profit=data["net_profit"],
 
         assets=50000000,
 
-        equity=30000000
+        equity=30000000,
+
+        market_cap=live["market_cap"]
 
     )
 
 
+
     # ==========================
-    # FORECAST CURRENT YEAR
+    # FORECAST
     # ==========================
+
 
     months_passed = 9
 
@@ -67,17 +106,18 @@ def main():
     ) * 12
 
 
+
     margin = (
         company.net_profit /
         company.sales
-    ) * 100
+    )
 
 
     forecast_profit = (
         forecast_sales *
-        margin /
-        100
+        margin
     )
+
 
 
     print()
@@ -87,11 +127,16 @@ def main():
     print("==============================")
 
 
-    print("Company:", company.name)
+    print(
+        "Company:",
+        company.name
+    )
 
-    print("Symbol:", company.symbol)
 
-    print("------------------------------")
+    print(
+        "Symbol:",
+        company.symbol
+    )
 
 
     print(
@@ -107,28 +152,16 @@ def main():
 
 
     print(
-        "Current Net Profit:",
+        "Current Profit:",
         company.net_profit
     )
 
 
     print(
-        "Forecast Net Profit:",
-        round(forecast_profit,2)
+        "Forecast Profit:",
+        round(forecast_profit)
     )
 
-
-    print("------------------------------")
-
-
-    print(
-        "Net Margin:",
-        round(margin,2),
-        "%"
-    )
-
-
-    print("==============================")
 
 
     # ==========================
@@ -136,22 +169,18 @@ def main():
     # ==========================
 
 
-    market_cap = live["market_cap"]
-
-
     sales_billion = forecast_sales / 10000
 
     profit_billion = forecast_profit / 10000
 
 
-    # سود نقدی فعلا دستی
     dividend = 11570
 
 
 
     result = calculate_valuation(
 
-        market_cap=market_cap,
+        market_cap=company.market_cap,
 
         forecast_sales=sales_billion,
 
@@ -166,6 +195,7 @@ def main():
     )
 
 
+
     print()
 
     print("==============================")
@@ -174,33 +204,9 @@ def main():
 
 
     print(
-        "Symbol:",
-        company.symbol
+        "Market Cap:",
+        company.market_cap
     )
-
-
-    print("------------------------------")
-
-
-    print(
-        "Market Value:",
-        market_cap
-    )
-
-
-    print(
-        "Forecast Sales:",
-        round(sales_billion,2)
-    )
-
-
-    print(
-        "Forecast Profit:",
-        round(profit_billion,2)
-    )
-
-
-    print("------------------------------")
 
 
     print(
@@ -234,6 +240,7 @@ def main():
 
 
     print("==============================")
+
 
 
 if __name__ == "__main__":
