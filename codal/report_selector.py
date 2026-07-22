@@ -2,7 +2,6 @@ from datetime import datetime
 import re
 
 
-
 class ReportSelector:
 
 
@@ -17,60 +16,76 @@ class ReportSelector:
 
 
 
-    def normalize(self,text):
+    def normalize(self, text):
 
         if not text:
             return ""
 
-        text=str(text)
+        text = str(text)
 
-        for a,b in {
+        replacements = {
 
-            "ي":"ی",
-            "ى":"ی",
-            "ك":"ک",
-            "\u200c":"",
-            "\u200e":"",
-            "\u200f":""
+            "ÙŠ": "ÛŒ",
+            "Ù‰": "ÛŒ",
+            "Ùƒ": "Ú©",
+            "\u200c": "",
+            "\u200e": "",
+            "\u200f": ""
 
-        }.items():
+        }
 
-            text=text.replace(a,b)
+        for a, b in replacements.items():
+
+            text = text.replace(a, b)
+
 
         return text
 
 
 
-    def normalize_digits(self,text):
+    def normalize_digits(self, text):
 
-        for a,b in {
+        if not text:
 
-            "۰":"0",
-            "۱":"1",
-            "۲":"2",
-            "۳":"3",
-            "۴":"4",
-            "۵":"5",
-            "۶":"6",
-            "۷":"7",
-            "۸":"8",
-            "۹":"9"
+            return ""
 
-        }.items():
 
-            text=text.replace(a,b)
+        replacements = {
+
+            "Û°": "0",
+            "Û±": "1",
+            "Û²": "2",
+            "Û³": "3",
+            "Û´": "4",
+            "Ûµ": "5",
+            "Û¶": "6",
+            "Û·": "7",
+            "Û¸": "8",
+            "Û¹": "9"
+
+        }
+
+
+        for a, b in replacements.items():
+
+            text = text.replace(a, b)
+
 
         return text
 
 
 
-    def extract_date(self,title):
+    def extract_date(self, title):
 
-        title=self.normalize_digits(title)
+        title = self.normalize_digits(title)
 
-        matches=re.findall(
+
+        matches = re.findall(
+
             r'140\d/\d{2}/\d{2}',
+
             title
+
         )
 
 
@@ -79,15 +94,22 @@ class ReportSelector:
             return datetime.min
 
 
+
         try:
 
-            y,m,d=matches[-1].split("/")
+            y, m, d = matches[-1].split("/")
+
 
             return datetime(
+
                 int(y),
+
                 int(m),
+
                 int(d)
+
             )
+
 
         except:
 
@@ -95,69 +117,117 @@ class ReportSelector:
 
 
 
-    def score_report(self,report):
+    def is_annual(self, report):
 
-        title=self.normalize(
+
+        title = self.normalize(
 
             report.get(
+
                 "title",
+
                 ""
+
             )
 
         )
 
 
-        score=0
+        return (
 
+            "سال مالی" in title
 
-        # حذف توضیحات
-        if "توضیحات" in title:
+            or
 
-            return -1000
+            "سالمالی" in title
 
-
-
-        # حذف تلفیقی
-        if "تلفیقی" in title:
-
-            score-=500
+        )
 
 
 
-        # صورت مالی سالانه اولویت بالا
-        if "صورتهای مالی" in title:
-
-            score+=100
+    def is_interim(self, report):
 
 
-        if "سالمالی" in title or "سال مالی" in title:
+        title = self.normalize(
 
-            score+=100
+            report.get(
 
+                "title",
 
+                ""
 
-        # حسابرسی شده بهتر است
-        if "حسابرسیشده" in title:
+            )
 
-            score+=50
-
-
-
-        # میان دوره ای پایین تر
-        if "میاندوره" in title:
-
-            score-=50
+        )
 
 
+        return (
 
-        return score
+            "میاندوره" in title
+
+            or
+
+            "میان دوره" in title
+
+            or
+
+            "دوره ۳ ماهه" in title
+
+            or
+
+            "دوره ۶ ماهه" in title
+
+            or
+
+            "دوره ۹ ماهه" in title
+
+        )
 
 
 
-    def latest_complete_financial(self):
+    def is_audited(self, report):
 
 
-        if not self.financial_reports:
+        title = self.normalize(
+
+            report.get(
+
+                "title",
+
+                ""
+
+            )
+
+        )
+
+
+        return (
+
+            "حسابرسی شده" in title
+
+            and
+
+            "نشده" not in title
+
+        )
+
+
+
+    def latest_annual(self):
+
+
+        annuals = [
+
+            r
+
+            for r in self.financial_reports
+
+            if self.is_annual(r)
+
+        ]
+
+
+        if not annuals:
 
             return None
 
@@ -165,18 +235,65 @@ class ReportSelector:
 
         return sorted(
 
-            self.financial_reports,
+            annuals,
 
-            key=lambda r:(
+            key=lambda r: (
 
-                self.score_report(r),
+                self.is_audited(r),
 
                 self.extract_date(
 
                     r.get(
+
                         "title",
+
                         ""
+
                     )
+
+                )
+
+            ),
+
+            reverse=True
+
+        )[0]
+
+
+
+    def latest_interim(self):
+
+
+        interims = [
+
+            r
+
+            for r in self.financial_reports
+
+            if self.is_interim(r)
+
+        ]
+
+
+        if not interims:
+
+            return None
+
+
+
+        return sorted(
+
+            interims,
+
+            key=lambda r:
+
+            self.extract_date(
+
+                r.get(
+
+                    "title",
+
+                    ""
 
                 )
 
@@ -191,7 +308,14 @@ class ReportSelector:
     def latest_financial(self):
 
 
-        return self.latest_complete_financial()
+        return self.latest_annual()
+
+
+
+    def latest_complete_financial(self):
+
+
+        return self.latest_annual()
 
 
 
@@ -213,8 +337,11 @@ class ReportSelector:
             self.extract_date(
 
                 r.get(
+
                     "title",
+
                     ""
+
                 )
 
             ),
