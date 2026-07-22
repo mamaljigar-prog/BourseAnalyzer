@@ -1,16 +1,34 @@
+from tsetmc.symbol_resolver import SymbolResolver
 from analysis.analyzer_engine import AnalyzerEngine
 
 
 
 def main():
 
-
     print("==============================")
     print("Bourse Analyzer")
     print("==============================")
 
 
-    ins_code = "43552974795606067"
+    symbol = "خراسان"
+
+
+    resolver = SymbolResolver()
+
+
+    ins_code = resolver.find_ins_code(
+        symbol
+    )
+
+
+    if not ins_code:
+
+        print(
+            "Symbol not found"
+        )
+
+        return
+
 
 
     company_name = (
@@ -47,9 +65,7 @@ def main():
     )
 
 
-
     result = engine.run()
-
 
 
     print(
