@@ -9,11 +9,13 @@ class ReportGenerator:
         profit_quality,
         valuation,
         liabilities,
-        balance_status
+        balance_status,
+        industry_rank=None
     ):
 
 
         sales_growth = (
+
             (
                 forecast_sales - company.sales
             )
@@ -21,12 +23,16 @@ class ReportGenerator:
             company.sales
             *
             100
+
             if company.sales
+
             else 0
+
         )
 
 
         profit_growth = (
+
             (
                 forecast_profit - company.net_profit
             )
@@ -34,16 +40,41 @@ class ReportGenerator:
             company.net_profit
             *
             100
+
             if company.net_profit
+
             else 0
+
         )
 
 
         debt_equity = (
+
             liabilities / company.equity
+
             if company.equity
+
             else 0
+
         )
+
+
+        industry_section = ""
+
+
+        if industry_rank:
+
+            industry_section = f"""
+
+INDUSTRY POSITION
+------------------------------
+Industry:
+{company.industry}
+
+Market Cap Rank:
+{industry_rank}
+
+"""
 
 
         return f"""
@@ -57,6 +88,8 @@ Company:
 Symbol:
 {company.symbol}
 
+
+{industry_section}
 
 PERFORMANCE
 ------------------------------

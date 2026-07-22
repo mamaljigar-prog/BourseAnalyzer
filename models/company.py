@@ -11,12 +11,15 @@ class Company:
         assets,
         equity,
         market_cap,
-        non_operating_income=0
+        non_operating_income=0,
+        industry=""
     ):
 
         self.name = name
 
         self.symbol = symbol
+
+        self.industry = industry
 
         self.sales = sales
 

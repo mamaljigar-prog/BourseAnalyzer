@@ -9,6 +9,8 @@ from codal.balance_sheet_parser import BalanceSheetParser
 from valuation.valuation_model import calculate_valuation
 
 from analysis.profit_quality import ProfitQualityAnalyzer
+from analysis.final_analyzer import FinalAnalyzer
+from analysis.report_generator import ReportGenerator
 
 
 
@@ -19,7 +21,12 @@ def build_sheet_url(base_url, sheet_id):
         return before + f"sheetId={sheet_id}"
 
     separator = "&" if "?" in base_url else "?"
-    return base_url + separator + f"sheetId={sheet_id}"
+
+    return (
+        base_url +
+        separator +
+        f"sheetId={sheet_id}"
+    )
 
 
 
@@ -30,8 +37,11 @@ def main():
     print("==============================")
 
 
-    ins_code = "43552974795606067"
+    # ==========================
+    # TSETMC
+    # ==========================
 
+    ins_code = "43552974795606067"
 
     api = TSETMCAdapter()
 
@@ -43,16 +53,18 @@ def main():
         ins_code
     )
 
-
     market = MarketData(
         closing,
         info
     )
 
-
     live = market.report()
 
 
+
+    # ==========================
+    # CODAL
+    # ==========================
 
     codal_base_url = (
         "https://codal.ir/Reports/Decision.aspx?"
@@ -65,46 +77,61 @@ def main():
 
 
 
+    # ==========================
+    # INCOME STATEMENT
+    # ==========================
+
     income_url = build_sheet_url(
         codal_base_url,
         1
     )
 
-
     financial = FinancialAdapter(
         income_url
     )
 
-
     data = financial.report()
 
 
+
+    # ==========================
+    # BALANCE SHEET
+    # ==========================
 
     balance_url = build_sheet_url(
         codal_base_url,
         0
     )
 
-
     balance_parser = BalanceSheetParser(
         balance_url
     )
 
-
-    balance_data = balance_parser.get_balance_data()
-
-
-    assets = balance_data.get("assets",0)
-
-    equity = balance_data.get("equity",0)
-
-    liabilities = balance_data.get("liabilities",0)
-
-    balanced = balance_data.get("balanced",False)
-
-    balance_total = balance_data.get("total",0)
+    balance_data = (
+        balance_parser.get_balance_data()
+    )
 
 
+    assets = balance_data.get(
+        "assets",
+        0
+    )
+
+    equity = balance_data.get(
+        "equity",
+        0
+    )
+
+    liabilities = balance_data.get(
+        "liabilities",
+        0
+    )
+
+
+
+    # ==========================
+    # COMPANY
+    # ==========================
 
     company = Company(
 
@@ -133,6 +160,10 @@ def main():
 
 
 
+    # ==========================
+    # FORECAST
+    # ==========================
+
     months_passed = 9
 
 
@@ -140,6 +171,7 @@ def main():
         company.sales /
         months_passed
     ) * 12
+
 
 
     margin = (
@@ -154,12 +186,17 @@ def main():
     )
 
 
+
     forecast_profit = (
         forecast_sales *
         margin
     )
 
 
+
+    # ==========================
+    # PROFIT QUALITY
+    # ==========================
 
     profit_quality = ProfitQualityAnalyzer(
 
@@ -173,12 +210,23 @@ def main():
 
 
 
-    sales_billion = forecast_sales / 10000
+    # ==========================
+    # VALUATION
+    # ==========================
 
-    profit_billion = forecast_profit / 10000
+    sales_billion = (
+        forecast_sales /
+        10000
+    )
 
 
-    result = calculate_valuation(
+    profit_billion = (
+        forecast_profit /
+        10000
+    )
+
+
+    valuation = calculate_valuation(
 
         market_cap=company.market_cap,
 
@@ -196,87 +244,50 @@ def main():
 
 
 
-    print()
+    # ==========================
+    # FINAL ANALYSIS
+    # ==========================
 
-    print("==============================")
-    print("FINAL ANALYSIS REPORT")
-    print("==============================")
+    final_analysis = FinalAnalyzer(
+
+        company,
+
+        forecast_sales,
+
+        forecast_profit,
+
+        profit_quality,
+
+        valuation
+
+    ).generate()
 
 
-    print(
-        "Company:",
-        company.name
+
+    # ==========================
+    # REPORT
+    # ==========================
+
+    report = ReportGenerator().generate(
+
+        company,
+
+        forecast_sales,
+
+        forecast_profit,
+
+        profit_quality,
+
+        valuation,
+
+        liabilities,
+
+        final_analysis["balance_sheet"]["status"]
+
     )
 
 
-    print(
-        "Symbol:",
-        company.symbol
-    )
-
-
-    print()
-
-    print("PROFIT QUALITY")
-
-    print(
-        "Operating Profit Coverage:",
-        profit_quality["operating_profit_ratio"],
-        "%"
-    )
-
-
-    print(
-        "Non Operating Income Ratio:",
-        profit_quality["non_operating_ratio"],
-        "%"
-    )
-
-
-    print(
-        "Quality Status:",
-        profit_quality["status"]
-    )
-
-
-    print()
-
-    print("VALUATION")
-
-    print(
-        "Market Cap:",
-        company.market_cap
-    )
-
-
-    print(
-        "P/E Forward:",
-        result["PE"]
-    )
-
-
-    print(
-        "P/S Forward:",
-        result["PS"]
-    )
-
-
-    print(
-        "P/B:",
-        result["PB"]
-    )
-
-
-    print(
-        "P/A:",
-        result["PA"]
-    )
-
-
-    print(
-        "P/D Forward:",
-        result["PD"]
-    )
+    print(report)
 
 
 
