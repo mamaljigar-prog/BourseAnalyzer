@@ -8,6 +8,9 @@ from codal.balance_sheet_parser import BalanceSheetParser
 
 from valuation.valuation_model import calculate_valuation
 
+from analysis.profit_quality import ProfitQualityAnalyzer
+
+
 
 def build_sheet_url(base_url, sheet_id):
 
@@ -16,8 +19,8 @@ def build_sheet_url(base_url, sheet_id):
         return before + f"sheetId={sheet_id}"
 
     separator = "&" if "?" in base_url else "?"
-
     return base_url + separator + f"sheetId={sheet_id}"
+
 
 
 def main():
@@ -26,20 +29,29 @@ def main():
     print("Bourse Analyzer")
     print("==============================")
 
+
     ins_code = "43552974795606067"
+
 
     api = TSETMCAdapter()
 
-    closing = api.get_closing_price(ins_code)
+    closing = api.get_closing_price(
+        ins_code
+    )
 
-    info = api.get_instrument_info(ins_code)
+    info = api.get_instrument_info(
+        ins_code
+    )
+
 
     market = MarketData(
         closing,
         info
     )
 
+
     live = market.report()
+
 
 
     codal_base_url = (
@@ -52,16 +64,20 @@ def main():
     )
 
 
+
     income_url = build_sheet_url(
         codal_base_url,
         1
     )
 
+
     financial = FinancialAdapter(
         income_url
     )
 
+
     data = financial.report()
+
 
 
     balance_url = build_sheet_url(
@@ -69,37 +85,25 @@ def main():
         0
     )
 
+
     balance_parser = BalanceSheetParser(
         balance_url
     )
 
+
     balance_data = balance_parser.get_balance_data()
 
 
-    assets = balance_data.get(
-        "assets",
-        0
-    )
+    assets = balance_data.get("assets",0)
 
-    equity = balance_data.get(
-        "equity",
-        0
-    )
+    equity = balance_data.get("equity",0)
 
-    liabilities = balance_data.get(
-        "liabilities",
-        0
-    )
+    liabilities = balance_data.get("liabilities",0)
 
-    balance_total = balance_data.get(
-        "total",
-        0
-    )
+    balanced = balance_data.get("balanced",False)
 
-    balanced = balance_data.get(
-        "balanced",
-        False
-    )
+    balance_total = balance_data.get("total",0)
+
 
 
     company = Company(
@@ -118,9 +122,15 @@ def main():
 
         equity=equity,
 
-        market_cap=live["market_cap"]
+        market_cap=live["market_cap"],
+
+        non_operating_income=data.get(
+            "non_operating_income",
+            0
+        )
 
     )
+
 
 
     months_passed = 9
@@ -137,48 +147,29 @@ def main():
         company.net_profit /
         company.sales
 
-    ) if company.sales else 0
+        if company.sales
 
-
-    forecast_profit = (
-
-        forecast_sales *
-        margin
+        else 0
 
     )
 
 
-    sales_growth = (
-
-        (
-            forecast_sales -
-            company.sales
-        )
-        /
-        company.sales
-
-    ) if company.sales else 0
-
-
-    profit_growth = (
-
-        (
-            forecast_profit -
-            company.net_profit
-        )
-        /
-        company.net_profit
-
-    ) if company.net_profit else 0
+    forecast_profit = (
+        forecast_sales *
+        margin
+    )
 
 
 
-    debt_to_equity = (
+    profit_quality = ProfitQualityAnalyzer(
 
-        liabilities /
-        equity
+        company.operating_profit,
 
-    ) if equity else 0
+        company.net_profit,
+
+        company.non_operating_income
+
+    ).analyze()
 
 
 
@@ -187,10 +178,7 @@ def main():
     profit_billion = forecast_profit / 10000
 
 
-    dividend = 11570
-
-
-    valuation = calculate_valuation(
+    result = calculate_valuation(
 
         market_cap=company.market_cap,
 
@@ -202,9 +190,10 @@ def main():
 
         assets=company.assets,
 
-        dividend=dividend
+        dividend=11570
 
     )
+
 
 
     print()
@@ -219,6 +208,7 @@ def main():
         company.name
     )
 
+
     print(
         "Symbol:",
         company.symbol
@@ -227,109 +217,31 @@ def main():
 
     print()
 
-    print("PERFORMANCE")
+    print("PROFIT QUALITY")
 
     print(
-        "Current Sales:",
-        company.sales
-    )
-
-    print(
-        "Forecast Sales:",
-        round(forecast_sales)
-    )
-
-    print(
-        "Sales Growth:",
-        round(
-            sales_growth * 100,
-            2
-        ),
-        "%"
-    )
-
-
-    print()
-
-    print("PROFITABILITY")
-
-
-    print(
-        "Current Profit:",
-        company.net_profit
-    )
-
-
-    print(
-        "Forecast Profit:",
-        round(forecast_profit)
-    )
-
-
-    print(
-        "Profit Growth:",
-        round(
-            profit_growth * 100,
-            2
-        ),
+        "Operating Profit Coverage:",
+        profit_quality["operating_profit_ratio"],
         "%"
     )
 
 
     print(
-        "Net Margin:",
-        round(
-            margin * 100,
-            2
-        ),
+        "Non Operating Income Ratio:",
+        profit_quality["non_operating_ratio"],
         "%"
     )
 
 
-    print()
-
-    print("BALANCE SHEET")
-
-
     print(
-        "Assets:",
-        assets
-    )
-
-
-    print(
-        "Equity:",
-        equity
-    )
-
-
-    print(
-        "Liabilities:",
-        liabilities
-    )
-
-
-    print(
-        "Balance Status:",
-        "Healthy"
-        if balanced
-        else "Warning"
-    )
-
-
-    print(
-        "Debt / Equity:",
-        round(
-            debt_to_equity,
-            2
-        )
+        "Quality Status:",
+        profit_quality["status"]
     )
 
 
     print()
 
     print("VALUATION")
-
 
     print(
         "Market Cap:",
@@ -339,64 +251,33 @@ def main():
 
     print(
         "P/E Forward:",
-        valuation["PE"]
+        result["PE"]
     )
 
 
     print(
         "P/S Forward:",
-        valuation["PS"]
+        result["PS"]
     )
 
 
     print(
         "P/B:",
-        valuation["PB"]
+        result["PB"]
     )
 
 
     print(
         "P/A:",
-        valuation["PA"]
+        result["PA"]
     )
 
 
     print(
         "P/D Forward:",
-        valuation["PD"]
+        result["PD"]
     )
 
-
-    print()
-
-    print("ANALYST SUMMARY")
-
-
-    if balanced:
-
-        print(
-            "- Balance sheet status: OK"
-        )
-
-    else:
-
-        print(
-            "- Balance sheet needs review"
-        )
-
-
-    if margin > 0.3:
-
-        print(
-            "- High profitability margin"
-        )
-
-
-    if valuation["PE"] < 7:
-
-        print(
-            "- Forward P/E is below base market PE"
-        )
 
 
 if __name__ == "__main__":
