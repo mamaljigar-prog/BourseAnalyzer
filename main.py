@@ -26,21 +26,13 @@ def main():
     print("Bourse Analyzer")
     print("==============================")
 
-    # ==========================
-    # TSETMC LIVE
-    # ==========================
-
     ins_code = "43552974795606067"
 
     api = TSETMCAdapter()
 
-    closing = api.get_closing_price(
-        ins_code
-    )
+    closing = api.get_closing_price(ins_code)
 
-    info = api.get_instrument_info(
-        ins_code
-    )
+    info = api.get_instrument_info(ins_code)
 
     market = MarketData(
         closing,
@@ -49,9 +41,6 @@ def main():
 
     live = market.report()
 
-    # ==========================
-    # CODAL BASE URL
-    # ==========================
 
     codal_base_url = (
         "https://codal.ir/Reports/Decision.aspx?"
@@ -62,9 +51,6 @@ def main():
         "&ft=-1"
     )
 
-    # ==========================
-    # INCOME STATEMENT
-    # ==========================
 
     income_url = build_sheet_url(
         codal_base_url,
@@ -77,9 +63,6 @@ def main():
 
     data = financial.report()
 
-    # ==========================
-    # BALANCE SHEET
-    # ==========================
 
     balance_url = build_sheet_url(
         codal_base_url,
@@ -90,9 +73,8 @@ def main():
         balance_url
     )
 
-    balance_data = (
-        balance_parser.get_balance_data()
-    )
+    balance_data = balance_parser.get_balance_data()
+
 
     assets = balance_data.get(
         "assets",
@@ -119,94 +101,118 @@ def main():
         False
     )
 
-    # ==========================
-    # COMPANY
-    # ==========================
 
     company = Company(
+
         name="پتروشیمی خراسان",
+
         symbol=live["symbol"],
+
         sales=data["sales"],
+
         operating_profit=data["operating_profit"],
+
         net_profit=data["net_profit"],
+
         assets=assets,
+
         equity=equity,
+
         market_cap=live["market_cap"]
+
     )
 
-    # ==========================
-    # BALANCE SHEET REPORT
-    # ==========================
-
-    print()
-
-    print("==============================")
-    print("BALANCE SHEET REPORT")
-    print("==============================")
-
-    print(
-        "Assets:",
-        assets
-    )
-
-    print(
-        "Equity:",
-        equity
-    )
-
-    print(
-        "Liabilities:",
-        liabilities
-    )
-
-    print(
-        "Equity + Liabilities:",
-        balance_total
-    )
-
-    print(
-        "Balanced:",
-        balanced
-    )
-
-    # ==========================
-    # FORECAST
-    # ==========================
 
     months_passed = 9
 
-    if months_passed <= 0:
-
-        raise ValueError(
-            "months_passed must be greater than zero"
-        )
 
     forecast_sales = (
         company.sales /
         months_passed
     ) * 12
 
-    if company.sales != 0:
 
-        margin = (
-            company.net_profit /
-            company.sales
-        )
+    margin = (
 
-    else:
+        company.net_profit /
+        company.sales
 
-        margin = 0
+    ) if company.sales else 0
+
 
     forecast_profit = (
+
         forecast_sales *
         margin
+
     )
+
+
+    sales_growth = (
+
+        (
+            forecast_sales -
+            company.sales
+        )
+        /
+        company.sales
+
+    ) if company.sales else 0
+
+
+    profit_growth = (
+
+        (
+            forecast_profit -
+            company.net_profit
+        )
+        /
+        company.net_profit
+
+    ) if company.net_profit else 0
+
+
+
+    debt_to_equity = (
+
+        liabilities /
+        equity
+
+    ) if equity else 0
+
+
+
+    sales_billion = forecast_sales / 10000
+
+    profit_billion = forecast_profit / 10000
+
+
+    dividend = 11570
+
+
+    valuation = calculate_valuation(
+
+        market_cap=company.market_cap,
+
+        forecast_sales=sales_billion,
+
+        forecast_profit=profit_billion,
+
+        equity=company.equity,
+
+        assets=company.assets,
+
+        dividend=dividend
+
+    )
+
 
     print()
 
     print("==============================")
-    print("FORECAST REPORT")
+    print("FINAL ANALYSIS REPORT")
     print("==============================")
+
 
     print(
         "Company:",
@@ -218,6 +224,11 @@ def main():
         company.symbol
     )
 
+
+    print()
+
+    print("PERFORMANCE")
+
     print(
         "Current Sales:",
         company.sales
@@ -225,102 +236,167 @@ def main():
 
     print(
         "Forecast Sales:",
-        round(
-            forecast_sales
-        )
+        round(forecast_sales)
     )
+
+    print(
+        "Sales Growth:",
+        round(
+            sales_growth * 100,
+            2
+        ),
+        "%"
+    )
+
+
+    print()
+
+    print("PROFITABILITY")
+
 
     print(
         "Current Profit:",
         company.net_profit
     )
 
+
     print(
         "Forecast Profit:",
+        round(forecast_profit)
+    )
+
+
+    print(
+        "Profit Growth:",
         round(
-            forecast_profit
-        )
+            profit_growth * 100,
+            2
+        ),
+        "%"
     )
 
-    # ==========================
-    # VALUATION
-    # ==========================
 
-    sales_billion = (
-        forecast_sales /
-        10000
+    print(
+        "Net Margin:",
+        round(
+            margin * 100,
+            2
+        ),
+        "%"
     )
 
-    profit_billion = (
-        forecast_profit /
-        10000
-    )
-
-    dividend = 11570
-
-    result = calculate_valuation(
-        market_cap=company.market_cap,
-        forecast_sales=sales_billion,
-        forecast_profit=profit_billion,
-        equity=company.equity,
-        assets=company.assets,
-        dividend=dividend
-    )
-
-    # ==========================
-    # VALUATION REPORT
-    # ==========================
 
     print()
 
-    print("==============================")
-    print("VALUATION REPORT")
-    print("==============================")
+    print("BALANCE SHEET")
 
-    print(
-        "Market Cap:",
-        company.market_cap
-    )
 
     print(
         "Assets:",
-        company.assets
+        assets
     )
+
 
     print(
         "Equity:",
-        company.equity
+        equity
     )
+
 
     print(
         "Liabilities:",
         liabilities
     )
 
+
+    print(
+        "Balance Status:",
+        "Healthy"
+        if balanced
+        else "Warning"
+    )
+
+
+    print(
+        "Debt / Equity:",
+        round(
+            debt_to_equity,
+            2
+        )
+    )
+
+
+    print()
+
+    print("VALUATION")
+
+
+    print(
+        "Market Cap:",
+        company.market_cap
+    )
+
+
     print(
         "P/E Forward:",
-        result["PE"]
+        valuation["PE"]
     )
+
 
     print(
         "P/S Forward:",
-        result["PS"]
+        valuation["PS"]
     )
+
 
     print(
         "P/B:",
-        result["PB"]
+        valuation["PB"]
     )
+
 
     print(
         "P/A:",
-        result["PA"]
+        valuation["PA"]
     )
+
 
     print(
         "P/D Forward:",
-        result["PD"]
+        valuation["PD"]
     )
+
+
+    print()
+
+    print("ANALYST SUMMARY")
+
+
+    if balanced:
+
+        print(
+            "- Balance sheet status: OK"
+        )
+
+    else:
+
+        print(
+            "- Balance sheet needs review"
+        )
+
+
+    if margin > 0.3:
+
+        print(
+            "- High profitability margin"
+        )
+
+
+    if valuation["PE"] < 7:
+
+        print(
+            "- Forward P/E is below base market PE"
+        )
 
 
 if __name__ == "__main__":
