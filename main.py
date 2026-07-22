@@ -1,19 +1,26 @@
 from core.analyzer_engine import AnalyzerEngine
+from core.analyzer_request import AnalyzerRequest
 
 
 
 def main():
+
 
     print("==============================")
     print("Bourse Analyzer")
     print("==============================")
 
 
+    request = AnalyzerRequest(
+
+        symbol="خراسان"
+
+    )
+
+
     engine = AnalyzerEngine(
 
-        symbol="خراسان",
-
-        company_name="پتروشیمی خراسان"
+        request.symbol
 
     )
 
@@ -22,7 +29,9 @@ def main():
 
 
     print(
+
         result["report"]
+
     )
 
 

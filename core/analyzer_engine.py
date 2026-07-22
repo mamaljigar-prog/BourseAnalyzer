@@ -21,12 +21,10 @@ class AnalyzerEngine:
 
     def __init__(
         self,
-        symbol,
-        company_name
+        symbol
     ):
 
         self.symbol = symbol
-        self.company_name = company_name
 
 
 
@@ -36,16 +34,44 @@ class AnalyzerEngine:
         sheet_id
     ):
 
+
+        if "sheetId=" in base_url:
+
+            before = base_url.split(
+                "sheetId="
+            )[0]
+
+
+            return (
+
+                before +
+
+                f"sheetId={sheet_id}"
+
+            )
+
+
         separator = (
+
             "&"
+
             if "?" in base_url
-            else "?"
+
+            else
+
+            "?"
+
         )
 
+
         return (
+
             base_url +
+
             separator +
+
             f"sheetId={sheet_id}"
+
         )
 
 
@@ -53,46 +79,57 @@ class AnalyzerEngine:
     def run(self):
 
 
-        # -------------------------
-        # Resolve Symbol
-        # -------------------------
+        # =========================
+        # Symbol Resolver
+        # =========================
 
         resolver = SymbolResolver()
 
 
         ins_code = resolver.find_ins_code(
+
             self.symbol
+
         )
 
 
         if not ins_code:
 
             raise ValueError(
-                "Instrument code not found"
+
+                "Symbol not found"
+
             )
 
 
 
-        # -------------------------
+        # =========================
         # Market Data
-        # -------------------------
+        # =========================
 
         api = TSETMCAdapter()
 
 
         closing = api.get_closing_price(
+
             ins_code
+
         )
 
 
         info = api.get_instrument_info(
+
             ins_code
+
         )
 
 
         market = MarketData(
+
             closing,
+
             info
+
         )
 
 
@@ -100,12 +137,30 @@ class AnalyzerEngine:
 
 
 
-        # -------------------------
-        # Codal Report Selection
-        # -------------------------
+        company_name = (
+
+            api.get_company_name(
+
+                info
+
+            )
+
+            or
+
+            self.symbol
+
+        )
+
+
+
+        # =========================
+        # Codal
+        # =========================
 
         codal_service = CodalReportService(
+
             self.symbol
+
         )
 
 
@@ -113,18 +168,19 @@ class AnalyzerEngine:
 
 
 
-        # -------------------------
-        # Financial Data
-        # -------------------------
-
         income_url = self.build_sheet_url(
+
             codal_url,
+
             1
+
         )
 
 
         financial = FinancialAdapter(
+
             income_url
+
         )
 
 
@@ -132,18 +188,23 @@ class AnalyzerEngine:
 
 
 
-        # -------------------------
+        # =========================
         # Balance Sheet
-        # -------------------------
+        # =========================
 
         balance_url = self.build_sheet_url(
+
             codal_url,
+
             0
+
         )
 
 
         balance_parser = BalanceSheetParser(
+
             balance_url
+
         )
 
 
@@ -152,33 +213,42 @@ class AnalyzerEngine:
 
 
         assets = balance.get(
+
             "assets",
+
             0
+
         )
 
 
         equity = balance.get(
+
             "equity",
+
             0
+
         )
 
 
         liabilities = balance.get(
+
             "liabilities",
+
             0
+
         )
 
 
 
-        # -------------------------
+        # =========================
         # Company Object
-        # -------------------------
+        # =========================
 
         company = Company(
 
-            name=self.company_name,
+            name=company_name,
 
-            symbol=live["symbol"],
+            symbol=self.symbol,
 
             sales=data["sales"],
 
@@ -193,17 +263,20 @@ class AnalyzerEngine:
             market_cap=live["market_cap"],
 
             non_operating_income=data.get(
+
                 "non_operating_income",
+
                 0
+
             )
 
         )
 
 
 
-        # -------------------------
+        # =========================
         # Forecast
-        # -------------------------
+        # =========================
 
         months_passed = 9
 
@@ -211,6 +284,7 @@ class AnalyzerEngine:
         forecast_sales = (
 
             company.sales /
+
             months_passed
 
         ) * 12
@@ -220,6 +294,7 @@ class AnalyzerEngine:
         margin = (
 
             company.net_profit /
+
             company.sales
 
             if company.sales
@@ -229,19 +304,19 @@ class AnalyzerEngine:
         )
 
 
-
         forecast_profit = (
 
             forecast_sales *
+
             margin
 
         )
 
 
 
-        # -------------------------
+        # =========================
         # Analysis
-        # -------------------------
+        # =========================
 
         profit_quality = ProfitQualityAnalyzer(
 
@@ -304,16 +379,25 @@ class AnalyzerEngine:
             liabilities,
 
             (
+
                 "Healthy"
+
                 if balance.get(
+
                     "balanced",
+
                     False
+
                 )
+
                 else
+
                 "Warning"
+
             )
 
         )
+
 
 
         return {

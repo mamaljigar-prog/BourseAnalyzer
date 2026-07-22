@@ -49,16 +49,33 @@ class CodalAdapter:
         )
 
 
-        print(
-
-            "Codal Status:",
-
-            response.status_code
-
-        )
+        response.raise_for_status()
 
 
         return response.json()
+
+
+
+    def normalize(self, text):
+
+        if not text:
+
+            return ""
+
+
+        return (
+
+            str(text)
+
+            .replace("\u200c", "")
+
+            .replace("\u200e", "")
+
+            .replace("\u200f", "")
+
+            .strip()
+
+        )
 
 
 
@@ -84,11 +101,15 @@ class CodalAdapter:
         for report in reports:
 
 
-            title = report.get(
+            title = self.normalize(
 
-                "Title",
+                report.get(
 
-                ""
+                    "Title",
+
+                    ""
+
+                )
 
             )
 
@@ -127,7 +148,6 @@ class CodalAdapter:
                 })
 
 
-
         return result
 
 
@@ -154,11 +174,15 @@ class CodalAdapter:
         for report in reports:
 
 
-            title = report.get(
+            title = self.normalize(
 
-                "Title",
+                report.get(
 
-                ""
+                    "Title",
+
+                    ""
+
+                )
 
             )
 
@@ -193,51 +217,4 @@ class CodalAdapter:
                 })
 
 
-
         return result
-
-
-
-
-
-if __name__ == "__main__":
-
-
-    adapter = CodalAdapter(
-
-        "فزر"
-
-    )
-
-
-    print(
-
-        "================ مالی ================"
-
-    )
-
-
-    for report in adapter.find_financial_reports():
-
-        print(
-
-            report["title"]
-
-        )
-
-
-
-    print(
-
-        "================ ماهانه ================"
-
-    )
-
-
-    for report in adapter.find_monthly_reports():
-
-        print(
-
-            report["title"]
-
-        )
