@@ -7,6 +7,7 @@ class FinancialAdapter:
 
         self.url = url
 
+
     def report(self):
 
         parser = CodalProfitLossParser(
@@ -15,6 +16,7 @@ class FinancialAdapter:
 
         data = parser.get_financial_data()
 
+
         result = {
 
             "sales":
@@ -22,15 +24,24 @@ class FinancialAdapter:
                     data["sales"]
                 ),
 
+
             "gross_profit":
                 self.extract_value(
                     data["gross_profit"]
                 ),
 
+
             "operating_profit":
                 self.extract_value(
                     data["operating_profit"]
                 ),
+
+
+            "non_operating_income":
+                self.extract_value(
+                    data["non_operating_income"]
+                ),
+
 
             "net_profit":
                 self.extract_value(
@@ -39,7 +50,10 @@ class FinancialAdapter:
 
         }
 
+
         return result
+
+
 
     def extract_value(self, rows):
 
@@ -53,8 +67,12 @@ class FinancialAdapter:
                         row["value"]
                     )
 
-                except (ValueError, TypeError):
+                except (
+                    ValueError,
+                    TypeError
+                ):
 
                     return 0
+
 
         return 0
