@@ -2,6 +2,9 @@ from codal.codal_adapter import CodalAdapter
 from codal.report_selector import ReportSelector
 from codal.codal_profit_loss_parser import CodalProfitLossParser
 from codal.financial_mapper import FinancialMapper
+from codal.balance_sheet_parser import BalanceSheetParser
+
+from financial.financial_statement import FinancialStatement
 
 
 
@@ -18,7 +21,7 @@ class FinancialService:
 
 
         # ==========================
-        # 1- دریافت گزارش‌های کدال
+        # 1- دریافت گزارش‌ها
         # ==========================
 
         adapter = CodalAdapter(
@@ -33,7 +36,7 @@ class FinancialService:
 
 
         # ==========================
-        # 2- انتخاب جدیدترین گزارش
+        # 2- انتخاب گزارش مناسب
         # ==========================
 
         selector = ReportSelector(
@@ -45,29 +48,36 @@ class FinancialService:
         )
 
 
-        latest_financial = selector.latest_financial()
+        latest_financial = selector.latest_complete_financial()
 
 
 
         if not latest_financial:
 
+
             return {
 
                 "error":
-                "گزارش مالی پیدا نشد"
+                "گزارش صورت مالی کامل پیدا نشد"
 
             }
 
 
 
         print("================")
-        print("LATEST REPORT")
-        print(latest_financial["title"])
+
+        print(
+            "LATEST REPORT"
+        )
+
+        print(
+            latest_financial["title"]
+        )
 
 
 
         # ==========================
-        # 3- ساخت URL کامل
+        # 3- ساخت URL
         # ==========================
 
         url = (
@@ -87,11 +97,33 @@ class FinancialService:
         # ==========================
 
         parser = CodalProfitLossParser(
+
             url
+
         )
 
 
         sheets = parser.extract_sheets()
+
+
+
+        print()
+
+        print(
+            "AVAILABLE SHEETS:"
+        )
+
+
+        for sheet in sheets:
+
+            print(
+
+                sheet.get(
+                    "title_Fa",
+                    ""
+                )
+
+            )
 
 
 
@@ -103,8 +135,11 @@ class FinancialService:
 
 
             title = sheet.get(
+
                 "title_Fa",
+
                 ""
+
             )
 
 
@@ -120,20 +155,32 @@ class FinancialService:
 
                 "صورت‌های مالی" in title
 
+                or
+
+                "صورت های مالی" in title
+
             ):
 
 
                 for table in sheet.get(
+
                     "tables",
+
                     []
+
                 ):
 
 
                     cells.extend(
+
                         table.get(
+
                             "cells",
+
                             []
+
                         )
+
                     )
 
 
@@ -144,6 +191,7 @@ class FinancialService:
             return {
 
                 "error":
+
                 "سلول مالی پیدا نشد"
 
             }
@@ -151,15 +199,66 @@ class FinancialService:
 
 
         # ==========================
-        # 5- مپ هوشمند ردیف‌ها
+        # 5- مپ سود و زیان
         # ==========================
 
         mapper = FinancialMapper(
+
             cells
+
         )
 
 
         financial_data = mapper.map_financials()
+
+
+
+        # ==========================
+        # 6- ساخت مدل مالی
+        # ==========================
+
+        statement = FinancialStatement(
+
+            financial_data
+
+        )
+
+
+
+        # ==========================
+        # 7- استخراج ترازنامه
+        # ==========================
+
+        balance_parser = BalanceSheetParser(
+
+            url
+
+        )
+
+
+        balance_data = balance_parser.get_balance_data()
+
+
+
+        statement.assets = balance_data.get(
+
+            "assets"
+
+        )
+
+
+        statement.equity = balance_data.get(
+
+            "equity"
+
+        )
+
+
+        statement.liabilities = balance_data.get(
+
+            "liabilities"
+
+        )
 
 
 
@@ -171,9 +270,9 @@ class FinancialService:
             latest_financial,
 
 
-            "data":
+            "statement":
 
-            financial_data
+            statement
 
 
         }
@@ -185,9 +284,10 @@ class FinancialService:
 if __name__ == "__main__":
 
 
-
     service = FinancialService(
-        "خراسان"
+
+        "فزر"
+
     )
 
 
@@ -197,4 +297,35 @@ if __name__ == "__main__":
 
     print("================")
 
-    print(result)
+
+
+    if "error" in result:
+
+
+        print(
+
+            "ERROR:",
+
+            result["error"]
+
+        )
+
+
+    else:
+
+
+        print(
+
+            result["report"]
+
+        )
+
+
+        print("================")
+
+
+        print(
+
+            result["statement"].to_dict()
+
+        )

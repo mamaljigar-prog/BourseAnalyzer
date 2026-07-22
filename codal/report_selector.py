@@ -2,20 +2,49 @@ from datetime import datetime
 import re
 
 
+
 class ReportSelector:
 
-    def __init__(self, financial_reports, monthly_reports):
+
+    def __init__(
+        self,
+        financial_reports,
+        monthly_reports
+    ):
 
         self.financial_reports = financial_reports or []
         self.monthly_reports = monthly_reports or []
 
 
-    def normalize_digits(self, text):
+
+    def normalize(self,text):
 
         if not text:
             return ""
 
-        digits = {
+        text=str(text)
+
+        for a,b in {
+
+            "ي":"ی",
+            "ى":"ی",
+            "ك":"ک",
+            "\u200c":"",
+            "\u200e":"",
+            "\u200f":""
+
+        }.items():
+
+            text=text.replace(a,b)
+
+        return text
+
+
+
+    def normalize_digits(self,text):
+
+        for a,b in {
+
             "۰":"0",
             "۱":"1",
             "۲":"2",
@@ -26,32 +55,33 @@ class ReportSelector:
             "۷":"7",
             "۸":"8",
             "۹":"9"
-        }
 
-        for a,b in digits.items():
-            text = text.replace(a,b)
+        }.items():
+
+            text=text.replace(a,b)
 
         return text
 
 
 
-    def extract_date(self, title):
+    def extract_date(self,title):
 
-        title = self.normalize_digits(title)
+        title=self.normalize_digits(title)
 
-        matches = re.findall(
+        matches=re.findall(
             r'140\d/\d{2}/\d{2}',
             title
         )
 
 
         if not matches:
+
             return datetime.min
 
 
         try:
 
-            y,m,d = matches[-1].split("/")
+            y,m,d=matches[-1].split("/")
 
             return datetime(
                 int(y),
@@ -65,78 +95,130 @@ class ReportSelector:
 
 
 
-    def is_revision(self, title):
+    def score_report(self,report):
 
-        if not title:
-            return False
+        title=self.normalize(
 
-        return (
-            "اصلاحیه" in title
-        )
-
-
-
-    def sort_key(self, report):
-
-        title = report.get(
-            "title",
-            ""
-        )
-
-        return (
-
-            self.extract_date(title),
-
-            self.is_revision(title)
+            report.get(
+                "title",
+                ""
+            )
 
         )
 
 
+        score=0
 
-    def latest(self, reports):
 
-        if not reports:
+        # حذف توضیحات
+        if "توضیحات" in title:
+
+            return -1000
+
+
+
+        # حذف تلفیقی
+        if "تلفیقی" in title:
+
+            score-=500
+
+
+
+        # صورت مالی سالانه اولویت بالا
+        if "صورتهای مالی" in title:
+
+            score+=100
+
+
+        if "سالمالی" in title or "سال مالی" in title:
+
+            score+=100
+
+
+
+        # حسابرسی شده بهتر است
+        if "حسابرسیشده" in title:
+
+            score+=50
+
+
+
+        # میان دوره ای پایین تر
+        if "میاندوره" in title:
+
+            score-=50
+
+
+
+        return score
+
+
+
+    def latest_complete_financial(self):
+
+
+        if not self.financial_reports:
+
             return None
 
 
+
         return sorted(
-            reports,
-            key=self.sort_key,
+
+            self.financial_reports,
+
+            key=lambda r:(
+
+                self.score_report(r),
+
+                self.extract_date(
+
+                    r.get(
+                        "title",
+                        ""
+                    )
+
+                )
+
+            ),
+
             reverse=True
+
         )[0]
 
 
 
     def latest_financial(self):
 
-        return self.latest(
-            self.financial_reports
-        )
+
+        return self.latest_complete_financial()
 
 
 
     def latest_monthly(self):
 
-        return self.latest(
-            self.monthly_reports
-        )
+
+        if not self.monthly_reports:
+
+            return None
 
 
 
-    def summary(self):
+        return sorted(
 
-        return {
+            self.monthly_reports,
 
-            "latest_financial":
-                self.latest_financial(),
+            key=lambda r:
 
-            "latest_monthly":
-                self.latest_monthly(),
+            self.extract_date(
 
-            "financial_count":
-                len(self.financial_reports),
+                r.get(
+                    "title",
+                    ""
+                )
 
-            "monthly_count":
-                len(self.monthly_reports)
+            ),
 
-        }
+            reverse=True
+
+        )[0]

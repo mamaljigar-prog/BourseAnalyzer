@@ -1,6 +1,7 @@
 import requests
 
 
+
 class CodalAdapter:
 
 
@@ -9,12 +10,15 @@ class CodalAdapter:
         self.symbol = symbol
 
         self.headers = {
+
             "User-Agent": "Mozilla/5.0"
+
         }
 
 
 
     def search_reports(self):
+
 
         url = "https://search.codal.ir/api/search/v2/q"
 
@@ -25,7 +29,9 @@ class CodalAdapter:
 
             "PageNumber": 1,
 
-            "PageSize": 50
+            "PageSize": 200,
+
+            "Category": 1
 
         }
 
@@ -44,8 +50,11 @@ class CodalAdapter:
 
 
         print(
+
             "Codal Status:",
+
             response.status_code
+
         )
 
 
@@ -55,87 +64,134 @@ class CodalAdapter:
 
     def find_financial_reports(self):
 
+
         data = self.search_reports()
 
 
         reports = data.get(
+
             "Letters",
+
             []
+
         )
 
 
         result = []
 
 
+
         for report in reports:
 
 
             title = report.get(
+
                 "Title",
+
                 ""
+
             )
 
 
             if (
-                "صورت‌های مالی" in title
-                or
-                "صورت های مالی" in title
-                or
-                "اطلاعات و صورت‌های مالی" in title
+
+                "صورت" in title
+
+                and
+
+                "مالی" in title
+
             ):
 
 
                 result.append({
 
-                    "type": "financial",
+                    "type":
 
-                    "title": title,
+                    "financial",
 
-                    "url": report.get("Url")
+
+                    "title":
+
+                    title,
+
+
+                    "url":
+
+                    report.get(
+
+                        "Url"
+
+                    )
 
                 })
+
 
 
         return result
 
 
 
-
     def find_monthly_reports(self):
+
 
         data = self.search_reports()
 
 
         reports = data.get(
+
             "Letters",
+
             []
+
         )
 
 
         result = []
 
 
+
         for report in reports:
 
 
             title = report.get(
+
                 "Title",
+
                 ""
+
             )
 
 
-            if "گزارش فعالیت ماهانه" in title:
+            if (
+
+                "گزارش فعالیت ماهانه" in title
+
+            ):
 
 
                 result.append({
 
-                    "type": "monthly",
+                    "type":
 
-                    "title": title,
+                    "monthly",
 
-                    "url": report.get("Url")
+
+                    "title":
+
+                    title,
+
+
+                    "url":
+
+                    report.get(
+
+                        "Url"
+
+                    )
 
                 })
+
 
 
         return result
@@ -148,22 +204,40 @@ if __name__ == "__main__":
 
 
     adapter = CodalAdapter(
-        "خراسان"
+
+        "فزر"
+
     )
 
 
-    print("================ مالی ================")
+    print(
+
+        "================ مالی ================"
+
+    )
 
 
-    for r in adapter.find_financial_reports():
+    for report in adapter.find_financial_reports():
 
-        print(r["title"])
+        print(
+
+            report["title"]
+
+        )
 
 
 
-    print("================ ماهانه ================")
+    print(
+
+        "================ ماهانه ================"
+
+    )
 
 
-    for r in adapter.find_monthly_reports():
+    for report in adapter.find_monthly_reports():
 
-        print(r["title"])
+        print(
+
+            report["title"]
+
+        )

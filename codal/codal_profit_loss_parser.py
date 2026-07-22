@@ -12,6 +12,7 @@ class CodalProfitLossParser:
             "User-Agent": "Mozilla/5.0"
         }
 
+
     def extract_sheets(self):
 
         response = requests.get(
@@ -29,31 +30,21 @@ class CodalProfitLossParser:
         start = text.find(marker)
 
         if start == -1:
-            raise ValueError(
-                "Sheets not found"
-            )
+            raise ValueError("Sheets not found")
 
         start += len(marker)
 
-        while (
-            start < len(text)
-            and text[start] != "["
-        ):
+        while start < len(text) and text[start] != "[":
             start += 1
 
         if start >= len(text):
+            raise ValueError("Sheets array not found")
 
-            raise ValueError(
-                "Sheets array not found"
-            )
 
         count = 0
         end = None
 
-        for i in range(
-            start,
-            len(text)
-        ):
+        for i in range(start, len(text)):
 
             if text[i] == "[":
                 count += 1
@@ -62,20 +53,18 @@ class CodalProfitLossParser:
                 count -= 1
 
             if count == 0:
-
                 end = i + 1
-
                 break
 
-        if end is None:
 
-            raise ValueError(
-                "Invalid sheets JSON"
-            )
+        if end is None:
+            raise ValueError("Invalid sheets JSON")
+
 
         return json.loads(
             text[start:end]
         )
+
 
     def normalize(self, value):
 
@@ -84,238 +73,88 @@ class CodalProfitLossParser:
 
         return (
             str(value)
-            .replace(
-                "\u200c",
-                ""
-            )
-            .replace(
-                "\u200e",
-                ""
-            )
-            .replace(
-                "\u200f",
-                ""
-            )
+            .replace("\u200c", "")
+            .replace("\u200e", "")
+            .replace("\u200f", "")
+            .replace("ي", "ی")
+            .replace("ك", "ک")
             .strip()
         )
 
-    def find_sheet(
-        self,
-        title
-    ):
 
-        sheets = self.extract_sheets()
-
-        target = self.normalize(
-            title
-        )
-
-        for sheet in sheets:
-
-            title_fa = self.normalize(
-                sheet.get(
-                    "title_Fa",
-                    ""
-                )
-            )
-
-            title_en = self.normalize(
-                sheet.get(
-                    "title_En",
-                    ""
-                )
-            ).lower()
-
-            if (
-                title_fa == target
-                or
-                title_en == target.lower()
-            ):
-
-                return sheet
-
-        return None
-
-    def parse_number(
-        self,
-        value
-    ):
+    def parse_number(self, value):
 
         if value is None:
             return 0
 
-        text = str(
-            value
-        ).strip()
+        text = str(value).strip()
 
-        if not text:
+        if text == "":
             return 0
 
+
         translation = str.maketrans(
-            "۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩",
-            "01234567890123456789"
+            "۰۱۲۳۴۵۶۷۸۹",
+            "0123456789"
         )
 
         text = text.translate(
             translation
         )
 
+
         text = (
             text
-            .replace(
-                ",",
-                ""
-            )
-            .replace(
-                "٬",
-                ""
-            )
-            .replace(
-                " ",
-                ""
-            )
+            .replace(",", "")
+            .replace(" ", "")
         )
 
+
         try:
+            return int(float(text))
 
-            return int(
-                float(text)
-            )
-
-        except (
-            ValueError,
-            TypeError
-        ):
+        except:
 
             return 0
 
-    def find_row(
-        self,
-        cells,
-        labels
-    ):
 
-        normalized_labels = {
-            self.normalize(
-                label
-            )
-            for label in labels
-        }
 
-        for cell in cells:
+    def find_income_statement_sheet(self):
 
-            if cell.get(
-                "columnCode"
-            ) != 1:
+        sheets = self.extract_sheets()
 
-                continue
+        for sheet in sheets:
 
-            value = self.normalize(
-                cell.get(
-                    "value",
+            title = self.normalize(
+                sheet.get(
+                    "title_Fa",
                     ""
                 )
             )
 
-            if value in normalized_labels:
+            if (
+                "صورت سود" in title
+                or
+                "سود و زیان" in title
+            ):
 
-                return cell.get(
-                    "rowCode"
-                )
+                return sheet
+
 
         return None
 
-    def get_row_cells(
-        self,
-        cells,
-        row_code
-    ):
 
-        if row_code is None:
 
-            return []
+    def get_cells(self):
 
-        result = []
-
-        for cell in cells:
-
-            if (
-                cell.get(
-                    "rowCode"
-                )
-                ==
-                row_code
-            ):
-
-                result.append(
-                    {
-                        "address":
-                            cell.get(
-                                "address"
-                            ),
-
-                        "columnCode":
-                            cell.get(
-                                "columnCode"
-                            ),
-
-                        "value":
-                            self.parse_number(
-                                cell.get(
-                                    "value"
-                                )
-                            ),
-
-                        "year":
-                            cell.get(
-                                "yearEndToDate"
-                            ),
-
-                        "period":
-                            cell.get(
-                                "periodEndToDate"
-                            )
-                    }
-                )
-
-        return result
-
-    def find_row_value(
-        self,
-        cells,
-        labels
-    ):
-
-        row_code = self.find_row(
-            cells,
-            labels
-        )
-
-        return self.get_row_cells(
-            cells,
-            row_code
-        )
-
-    def get_financial_data(
-        self
-    ):
-
-        sheet = self.find_sheet(
-            "صورت سود و زیان"
-        )
+        sheet = self.find_income_statement_sheet()
 
         if sheet is None:
 
-            print(
-                "Income Statement not found"
+            raise ValueError(
+                "Income statement not found"
             )
 
-            return {
-                "sales": [],
-                "gross_profit": [],
-                "operating_profit": [],
-                "net_profit": []
-            }
 
         tables = sheet.get(
             "tables",
@@ -324,82 +163,192 @@ class CodalProfitLossParser:
 
         if not tables:
 
-            print(
-                "Income Statement table not found"
+            raise ValueError(
+                "Tables not found"
             )
 
-            return {
-                "sales": [],
-                "gross_profit": [],
-                "operating_profit": [],
-                "net_profit": []
-            }
 
-        cells = tables[0].get(
+        return tables[0].get(
             "cells",
             []
         )
 
-        data = {
+
+
+    def find_row(self, cells, keywords):
+
+        keywords = [
+            self.normalize(x)
+            for x in keywords
+        ]
+
+
+        for cell in cells:
+
+            if cell.get("columnCode") != 1:
+                continue
+
+
+            title = self.normalize(
+                cell.get(
+                    "value",
+                    ""
+                )
+            )
+
+
+            for key in keywords:
+
+                if key in title:
+
+                    return cell.get(
+                        "rowCode"
+                    )
+
+
+        return None
+
+
+
+    def get_row_values(self, cells, row_code):
+
+        result = []
+
+
+        for cell in cells:
+
+            if cell.get(
+                "rowCode"
+            ) == row_code:
+
+
+                result.append(
+                    {
+                        "address": cell.get(
+                            "address"
+                        ),
+
+                        "columnCode": cell.get(
+                            "columnCode"
+                        ),
+
+                        "value": self.parse_number(
+                            cell.get(
+                                "value"
+                            )
+                        ),
+
+                        "year": cell.get(
+                            "yearEndToDate"
+                        ),
+
+                        "period": cell.get(
+                            "periodEndToDate"
+                        )
+                    }
+                )
+
+
+        return result
+
+
+
+    def extract_concept(self, cells, keywords):
+
+        row = self.find_row(
+            cells,
+            keywords
+        )
+
+
+        if row is None:
+            return []
+
+
+        return self.get_row_values(
+            cells,
+            row
+        )
+
+
+
+    def get_financial_data(self):
+
+        cells = self.get_cells()
+
+
+        return {
 
             "sales":
-                self.find_row_value(
+                self.extract_concept(
                     cells,
-                    {
+                    [
                         "درآمدهای عملیاتی",
                         "درآمدهاي عملياتي"
-                    }
+                    ]
                 ),
+
 
             "gross_profit":
-                self.find_row_value(
+                self.extract_concept(
                     cells,
-                    {
+                    [
                         "سود(زیان) ناخالص",
                         "سود(زيان) ناخالص"
-                    }
+                    ]
                 ),
+
 
             "operating_profit":
-                self.find_row_value(
+                self.extract_concept(
                     cells,
-                    {
+                    [
                         "سود(زیان) عملیاتی",
-                        "سود(زيان) عملياتي"
-                    }
+                        "سود(زيان) عملياتى"
+                    ]
                 ),
 
-            "net_profit":
-                self.find_row_value(
+
+            "non_operating_income":
+                self.extract_concept(
                     cells,
-                    {
+                    [
+                        "سایر درآمدها و هزینه های غیرعملیاتی",
+                        "ساير درآمدها و هزينه هاي غيرعملياتي"
+                    ]
+                ),
+
+
+            "net_profit":
+                self.extract_concept(
+                    cells,
+                    [
                         "سود(زیان) خالص",
                         "سود(زيان) خالص"
-                    }
+                    ]
                 )
 
         }
 
-        return data
 
 
 if __name__ == "__main__":
 
+
     url = (
         "https://codal.ir/Reports/Decision.aspx?"
         "LetterSerial=OOObOOOaNGDL045HqC0wNGueH5Hw%3d%3d"
-        "&rt=0"
-        "&let=6"
-        "&ct=0"
-        "&ft=-1"
-        "&sheetId=1"
+        "&rt=0&let=6&ct=0&ft=-1&sheetId=1"
     )
+
 
     parser = CodalProfitLossParser(
         url
     )
 
+
     result = parser.get_financial_data()
+
 
     print(
         json.dumps(
