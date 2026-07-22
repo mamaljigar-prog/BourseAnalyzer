@@ -9,13 +9,13 @@ from codal.sheet_loader import CodalSheetLoader
 from codal.sheet_selector import SheetSelector
 from codal.financial_adapter import FinancialAdapter
 from codal.balance_sheet_parser import BalanceSheetParser
-from codal.report_period_detector import ReportPeriodDetector
 
 from valuation.valuation_model import calculate_valuation
 
 from analysis.profit_quality import ProfitQualityAnalyzer
 from analysis.final_analyzer import FinalAnalyzer
 from analysis.report_generator import ReportGenerator
+
 
 
 class AnalyzerEngine:
@@ -29,6 +29,10 @@ class AnalyzerEngine:
 
     def run(self):
 
+
+        # =========================
+        # Symbol Resolver
+        # =========================
 
         resolver = SymbolResolver()
 
@@ -44,6 +48,10 @@ class AnalyzerEngine:
             )
 
 
+
+        # =========================
+        # Market Data
+        # =========================
 
         api = TSETMCAdapter()
 
@@ -79,6 +87,10 @@ class AnalyzerEngine:
 
 
 
+        # =========================
+        # Codal Report
+        # =========================
+
         codal_service = CodalReportService(
             self.symbol
         )
@@ -94,18 +106,6 @@ class AnalyzerEngine:
             )
 
 
-
-        report_period = ReportPeriodDetector(
-
-            codal_report.get(
-                "title",
-                ""
-            )
-
-        ).detect()
-
-
-
         report_url = codal_report.get(
             "url"
         )
@@ -118,6 +118,10 @@ class AnalyzerEngine:
             )
 
 
+
+        # =========================
+        # Load Sheets
+        # =========================
 
         loader = CodalSheetLoader(
             report_url
@@ -163,12 +167,23 @@ class AnalyzerEngine:
 
 
 
+        income_url = income_sheet.get(
+            "url"
+        )
+
+
+        balance_url = balance_sheet.get(
+            "url"
+        )
+
+
+
+        # =========================
+        # Financial Data
+        # =========================
+
         financial = FinancialAdapter(
-
-            income_sheet.get(
-                "url"
-            )
-
+            income_url
         )
 
 
@@ -176,12 +191,12 @@ class AnalyzerEngine:
 
 
 
+        # =========================
+        # Balance Sheet
+        # =========================
+
         balance_parser = BalanceSheetParser(
-
-            balance_sheet.get(
-                "url"
-            )
-
+            balance_url
         )
 
 
@@ -207,6 +222,10 @@ class AnalyzerEngine:
         )
 
 
+
+        # =========================
+        # Company
+        # =========================
 
         company = Company(
 
@@ -236,35 +255,19 @@ class AnalyzerEngine:
 
 
         # =========================
-        # Forecast Logic
+        # Forecast
         # =========================
-        # قانون تحلیل:
-        # گزارش میان دوره‌ای -> Annualize
-        # گزارش سالانه -> همان مقدار واقعی
+
+        months_passed = 9
 
 
-        months_passed = report_period.get(
-            "months",
-            12
-        )
+        forecast_sales = (
 
+            company.sales /
 
-        if months_passed < 12:
+            months_passed
 
-
-            forecast_sales = (
-
-                company.sales /
-
-                months_passed
-
-            ) * 12
-
-
-        else:
-
-
-            forecast_sales = company.sales
+        ) * 12
 
 
 
@@ -290,6 +293,10 @@ class AnalyzerEngine:
         )
 
 
+
+        # =========================
+        # Analysis
+        # =========================
 
         profit_quality = ProfitQualityAnalyzer(
 
@@ -367,12 +374,9 @@ class AnalyzerEngine:
 
                 "Warning"
 
-            ),
-
-            report_period
+            )
 
         )
-
 
 
         return {
