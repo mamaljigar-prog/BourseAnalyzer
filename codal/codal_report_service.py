@@ -5,27 +5,34 @@ from codal.report_selector import ReportSelector
 class CodalReportService:
 
 
-    def __init__(self, symbol):
+    def __init__(
+        self,
+        symbol
+    ):
 
         self.symbol = symbol
+
+        self.base_url = (
+            "https://codal.ir"
+        )
 
 
 
     def get_latest_financial_report(self):
 
+
         adapter = CodalAdapter(
+
             self.symbol
+
         )
 
 
-        financial_reports = (
-            adapter.find_financial_reports()
-        )
+        financial_reports = adapter.find_financial_reports()
 
 
-        monthly_reports = (
-            adapter.find_monthly_reports()
-        )
+        monthly_reports = adapter.find_monthly_reports()
+
 
 
         selector = ReportSelector(
@@ -37,14 +44,17 @@ class CodalReportService:
         )
 
 
+
         report = selector.latest_financial()
 
 
-        if report is None:
+
+        if not report:
 
             raise ValueError(
                 "No valid financial report found"
             )
+
 
 
         return report
@@ -53,54 +63,199 @@ class CodalReportService:
 
     def get_report_url(self):
 
-        report = (
-            self.get_latest_financial_report()
-        )
+
+        report = self.get_latest_financial_report()
+
 
 
         url = report.get(
+
             "url"
+
         )
+
 
 
         if not url:
 
             raise ValueError(
-                "Financial report URL not found"
+
+                "Invalid report url"
+
             )
 
 
-        if not url.startswith(
+
+        if url.startswith(
             "http"
         ):
 
-            url = (
-                "https://codal.ir"
-                +
-                url
+            return url
+
+
+
+        return (
+
+            self.base_url +
+
+            url
+
+        )
+
+
+
+    def get_sheets(
+        self,
+        url
+    ):
+
+
+        import requests
+        import json
+
+
+
+        response = requests.get(
+
+            url,
+
+            headers={
+
+                "User-Agent":
+
+                "Mozilla/5.0"
+
+            },
+
+            timeout=30
+
+        )
+
+
+        response.raise_for_status()
+
+
+
+        text = response.text
+
+
+
+        marker = '"sheets":'
+
+
+
+        start = text.find(
+
+            marker
+
+        )
+
+
+
+        if start == -1:
+
+            raise ValueError(
+
+                "Sheets not found"
+
             )
 
 
-        return url
+
+        start += len(marker)
 
 
 
-if __name__ == "__main__":
+        while (
+
+            start < len(text)
+
+            and
+
+            text[start] != "["
+
+        ):
+
+            start += 1
 
 
-    service = CodalReportService(
-        "خراسان"
-    )
+
+        depth = 0
+
+        end = None
 
 
-    report = service.get_latest_financial_report()
+
+        for index in range(
+
+            start,
+
+            len(text)
+
+        ):
 
 
-    print(
-        report
-    )
+            if text[index] == "[":
+
+                depth += 1
 
 
-    print(
-        service.get_report_url()
-    )
+
+            elif text[index] == "]":
+
+                depth -= 1
+
+
+
+            if depth == 0:
+
+
+                end = index + 1
+
+                break
+
+
+
+        if end is None:
+
+            raise ValueError(
+
+                "Invalid sheets json"
+
+            )
+
+
+
+        return json.loads(
+
+            text[start:end]
+
+        )
+
+
+
+    def select_sheets(
+        self,
+        url
+    ):
+
+
+        from codal.sheet_selector import SheetSelector
+
+
+
+        sheets = self.get_sheets(
+
+            url
+
+        )
+
+
+        selector = SheetSelector(
+
+            sheets
+
+        )
+
+
+        return selector.report()
