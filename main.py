@@ -17,8 +17,13 @@ from analysis.report_generator import ReportGenerator
 def build_sheet_url(base_url, sheet_id):
 
     if "sheetId=" in base_url:
-        before = base_url.split("sheetId=")[0]
+
+        before = base_url.split(
+            "sheetId="
+        )[0]
+
         return before + f"sheetId={sheet_id}"
+
 
     separator = "&" if "?" in base_url else "?"
 
@@ -32,84 +37,97 @@ def build_sheet_url(base_url, sheet_id):
 
 def main():
 
+
     print("==============================")
     print("Bourse Analyzer")
     print("==============================")
 
 
-    # ==========================
-    # TSETMC
-    # ==========================
-
     ins_code = "43552974795606067"
 
+
+
+    # -------------------------
+    # Market Data
+    # -------------------------
+
     api = TSETMCAdapter()
+
 
     closing = api.get_closing_price(
         ins_code
     )
 
+
     info = api.get_instrument_info(
         ins_code
     )
+
 
     market = MarketData(
         closing,
         info
     )
 
+
     live = market.report()
 
 
 
-    # ==========================
-    # CODAL
-    # ==========================
+    # -------------------------
+    # Codal Data
+    # -------------------------
 
     codal_base_url = (
+
         "https://codal.ir/Reports/Decision.aspx?"
+
         "LetterSerial=OOObOOOaNGDL045HqC0wNGueH5Hw%3d%3d"
+
         "&rt=0"
+
         "&let=6"
+
         "&ct=0"
+
         "&ft=-1"
+
     )
 
 
-
-    # ==========================
-    # INCOME STATEMENT
-    # ==========================
 
     income_url = build_sheet_url(
         codal_base_url,
         1
     )
 
+
     financial = FinancialAdapter(
         income_url
     )
+
 
     data = financial.report()
 
 
 
-    # ==========================
-    # BALANCE SHEET
-    # ==========================
+    # -------------------------
+    # Balance Sheet
+    # -------------------------
 
     balance_url = build_sheet_url(
         codal_base_url,
         0
     )
 
+
     balance_parser = BalanceSheetParser(
         balance_url
     )
 
-    balance_data = (
-        balance_parser.get_balance_data()
-    )
+
+    balance_data = balance_parser.get_balance_data()
+
 
 
     assets = balance_data.get(
@@ -117,10 +135,12 @@ def main():
         0
     )
 
+
     equity = balance_data.get(
         "equity",
         0
     )
+
 
     liabilities = balance_data.get(
         "liabilities",
@@ -128,10 +148,26 @@ def main():
     )
 
 
+    balance_status = (
 
-    # ==========================
-    # COMPANY
-    # ==========================
+        "Healthy"
+
+        if balance_data.get(
+            "balanced",
+            False
+        )
+
+        else
+
+        "Warning"
+
+    )
+
+
+
+    # -------------------------
+    # Company Object
+    # -------------------------
 
     company = Company(
 
@@ -160,16 +196,18 @@ def main():
 
 
 
-    # ==========================
-    # FORECAST
-    # ==========================
+    # -------------------------
+    # Forecast
+    # -------------------------
 
     months_passed = 9
 
 
     forecast_sales = (
+
         company.sales /
         months_passed
+
     ) * 12
 
 
@@ -186,17 +224,18 @@ def main():
     )
 
 
-
     forecast_profit = (
+
         forecast_sales *
         margin
+
     )
 
 
 
-    # ==========================
-    # PROFIT QUALITY
-    # ==========================
+    # -------------------------
+    # Analysis Modules
+    # -------------------------
 
     profit_quality = ProfitQualityAnalyzer(
 
@@ -210,29 +249,13 @@ def main():
 
 
 
-    # ==========================
-    # VALUATION
-    # ==========================
-
-    sales_billion = (
-        forecast_sales /
-        10000
-    )
-
-
-    profit_billion = (
-        forecast_profit /
-        10000
-    )
-
-
     valuation = calculate_valuation(
 
         market_cap=company.market_cap,
 
-        forecast_sales=sales_billion,
+        forecast_sales=forecast_sales / 10000,
 
-        forecast_profit=profit_billion,
+        forecast_profit=forecast_profit / 10000,
 
         equity=company.equity,
 
@@ -243,10 +266,6 @@ def main():
     )
 
 
-
-    # ==========================
-    # FINAL ANALYSIS
-    # ==========================
 
     final_analysis = FinalAnalyzer(
 
@@ -264,9 +283,9 @@ def main():
 
 
 
-    # ==========================
-    # REPORT
-    # ==========================
+    # -------------------------
+    # Final Report
+    # -------------------------
 
     report = ReportGenerator().generate(
 
@@ -282,7 +301,7 @@ def main():
 
         liabilities,
 
-        final_analysis["balance_sheet"]["status"]
+        balance_status
 
     )
 
