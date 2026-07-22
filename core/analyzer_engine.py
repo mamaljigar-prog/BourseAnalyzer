@@ -18,7 +18,6 @@ from analysis.final_analyzer import FinalAnalyzer
 from analysis.report_generator import ReportGenerator
 
 
-
 class AnalyzerEngine:
 
 
@@ -96,6 +95,17 @@ class AnalyzerEngine:
 
 
 
+        report_period = ReportPeriodDetector(
+
+            codal_report.get(
+                "title",
+                ""
+            )
+
+        ).detect()
+
+
+
         report_url = codal_report.get(
             "url"
         )
@@ -153,19 +163,12 @@ class AnalyzerEngine:
 
 
 
-        income_url = income_sheet.get(
-            "url"
-        )
-
-
-        balance_url = balance_sheet.get(
-            "url"
-        )
-
-
-
         financial = FinancialAdapter(
-            income_url
+
+            income_sheet.get(
+                "url"
+            )
+
         )
 
 
@@ -174,7 +177,11 @@ class AnalyzerEngine:
 
 
         balance_parser = BalanceSheetParser(
-            balance_url
+
+            balance_sheet.get(
+                "url"
+            )
+
         )
 
 
@@ -229,27 +236,35 @@ class AnalyzerEngine:
 
 
         # =========================
-        # Automatic Period Detection
+        # Forecast Logic
         # =========================
-
-        months_passed = ReportPeriodDetector(
-
-            codal_report.get(
-                "title",
-                ""
-            )
-
-        ).detect_months()
+        # قانون تحلیل:
+        # گزارش میان دوره‌ای -> Annualize
+        # گزارش سالانه -> همان مقدار واقعی
 
 
+        months_passed = report_period.get(
+            "months",
+            12
+        )
 
-        forecast_sales = (
 
-            company.sales /
+        if months_passed < 12:
 
-            months_passed
 
-        ) * 12
+            forecast_sales = (
+
+                company.sales /
+
+                months_passed
+
+            ) * 12
+
+
+        else:
+
+
+            forecast_sales = company.sales
 
 
 
@@ -352,7 +367,9 @@ class AnalyzerEngine:
 
                 "Warning"
 
-            )
+            ),
+
+            report_period
 
         )
 

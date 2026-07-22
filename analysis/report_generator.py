@@ -10,6 +10,7 @@ class ReportGenerator:
         valuation,
         liabilities,
         balance_status,
+        report_period=None,
         industry_rank=None
     ):
 
@@ -77,6 +78,25 @@ Market Cap Rank:
 """
 
 
+        period_section = ""
+
+
+        if report_period:
+
+            period_section = f"""
+
+REPORT INFORMATION
+------------------------------
+Report Period:
+{report_period.get("period")}
+
+Forecast Method:
+{report_period.get("forecast_method")}
+
+"""
+
+
+
         return f"""
 ==============================
 FINAL ANALYSIS REPORT
@@ -90,6 +110,8 @@ Symbol:
 
 
 {industry_section}
+
+{period_section}
 
 PERFORMANCE
 ------------------------------
