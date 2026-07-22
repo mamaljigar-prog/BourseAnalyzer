@@ -9,6 +9,7 @@ from codal.sheet_loader import CodalSheetLoader
 from codal.sheet_selector import SheetSelector
 from codal.financial_adapter import FinancialAdapter
 from codal.balance_sheet_parser import BalanceSheetParser
+from codal.report_period_detector import ReportPeriodDetector
 
 from valuation.valuation_model import calculate_valuation
 
@@ -30,10 +31,6 @@ class AnalyzerEngine:
     def run(self):
 
 
-        # =========================
-        # Symbol Resolver
-        # =========================
-
         resolver = SymbolResolver()
 
         ins_code = resolver.find_ins_code(
@@ -48,10 +45,6 @@ class AnalyzerEngine:
             )
 
 
-
-        # =========================
-        # Market Data
-        # =========================
 
         api = TSETMCAdapter()
 
@@ -87,10 +80,6 @@ class AnalyzerEngine:
 
 
 
-        # =========================
-        # Codal Report
-        # =========================
-
         codal_service = CodalReportService(
             self.symbol
         )
@@ -106,6 +95,7 @@ class AnalyzerEngine:
             )
 
 
+
         report_url = codal_report.get(
             "url"
         )
@@ -118,10 +108,6 @@ class AnalyzerEngine:
             )
 
 
-
-        # =========================
-        # Load Sheets
-        # =========================
 
         loader = CodalSheetLoader(
             report_url
@@ -178,10 +164,6 @@ class AnalyzerEngine:
 
 
 
-        # =========================
-        # Financial Data
-        # =========================
-
         financial = FinancialAdapter(
             income_url
         )
@@ -190,10 +172,6 @@ class AnalyzerEngine:
         data = financial.report()
 
 
-
-        # =========================
-        # Balance Sheet
-        # =========================
 
         balance_parser = BalanceSheetParser(
             balance_url
@@ -223,10 +201,6 @@ class AnalyzerEngine:
 
 
 
-        # =========================
-        # Company
-        # =========================
-
         company = Company(
 
             name=company_name,
@@ -255,10 +229,18 @@ class AnalyzerEngine:
 
 
         # =========================
-        # Forecast
+        # Automatic Period Detection
         # =========================
 
-        months_passed = 9
+        months_passed = ReportPeriodDetector(
+
+            codal_report.get(
+                "title",
+                ""
+            )
+
+        ).detect_months()
+
 
 
         forecast_sales = (
@@ -293,10 +275,6 @@ class AnalyzerEngine:
         )
 
 
-
-        # =========================
-        # Analysis
-        # =========================
 
         profit_quality = ProfitQualityAnalyzer(
 
@@ -377,6 +355,7 @@ class AnalyzerEngine:
             )
 
         )
+
 
 
         return {
