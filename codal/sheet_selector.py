@@ -10,7 +10,6 @@ class SheetSelector:
     def normalize(self, text):
 
         if not text:
-
             return ""
 
         return (
@@ -18,26 +17,26 @@ class SheetSelector:
             .replace("\u200c", "")
             .replace("\u200e", "")
             .replace("\u200f", "")
-            .replace("ي", "ی")
-            .replace("ك", "ک")
             .strip()
         )
 
 
 
-    def find_sheet(
-        self,
-        keywords
-    ):
+    def get_title(self, sheet):
+
+        return self.normalize(
+
+            sheet.get("title", "")
+
+        )
+
+
+
+    def find_sheet(self, keywords):
 
         for sheet in self.sheets:
 
-            title = self.normalize(
-                sheet.get(
-                    "title_Fa",
-                    ""
-                )
-            )
+            title = self.get_title(sheet)
 
 
             for keyword in keywords:
@@ -56,9 +55,11 @@ class SheetSelector:
         return self.find_sheet(
 
             [
+
+                "صورت سود و زیان",
                 "صورت سود",
-                "سود و زیان",
-                "صورت سود و زیان"
+                "سود و زیان"
+
             ]
 
         )
@@ -70,8 +71,10 @@ class SheetSelector:
         return self.find_sheet(
 
             [
+
                 "صورت وضعیت مالی",
                 "ترازنامه"
+
             ]
 
         )

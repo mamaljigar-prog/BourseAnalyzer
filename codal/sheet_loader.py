@@ -4,6 +4,7 @@ import re
 
 class CodalSheetLoader:
 
+
     def __init__(self, url):
 
         self.url = url
@@ -11,6 +12,36 @@ class CodalSheetLoader:
         self.headers = {
             "User-Agent": "Mozilla/5.0"
         }
+
+
+
+    def build_sheet_url(self, sheet_id):
+
+        if "sheetId=" in self.url:
+
+            base = self.url.split(
+                "sheetId="
+            )[0]
+
+            return (
+                base +
+                f"sheetId={sheet_id}"
+            )
+
+
+        separator = (
+            "&"
+            if "?" in self.url
+            else "?"
+        )
+
+
+        return (
+            self.url +
+            separator +
+            f"sheetId={sheet_id}"
+        )
+
 
 
     def get_sheet_options(self):
@@ -21,12 +52,14 @@ class CodalSheetLoader:
             timeout=60
         )
 
+
         html = r.text
 
 
         start = html.find(
             '<select name="ctl00$ddlTable"'
         )
+
 
         end = html.find(
             "</select>",
@@ -37,7 +70,10 @@ class CodalSheetLoader:
         section = html[start:end]
 
 
-        pattern = r'<option[^>]*value="([^"]+)"[^>]*>([^<]+)'
+        pattern = (
+            r'<option[^>]*value="([^"]+)"'
+            r'[^>]*>([^<]+)'
+        )
 
 
         matches = re.findall(
@@ -54,24 +90,10 @@ class CodalSheetLoader:
             result.append(
                 {
                     "id": value,
-                    "title": title.strip()
+                    "title": title.strip(),
+                    "url": self.build_sheet_url(value)
                 }
             )
 
 
         return result
-
-
-
-if __name__ == "__main__":
-
-
-    url = "https://codal.ir/Reports/Decision.aspx?LetterSerial=OOObOOOaNGDL045HqC0wNGueH5Hw%3d%3d&rt=0&let=6&ct=0&ft=-1"
-
-
-    loader = CodalSheetLoader(url)
-
-
-    for item in loader.get_sheet_options():
-
-        print(item)

@@ -5,6 +5,8 @@ from tsetmc.tsetmc_market import MarketData
 from tsetmc.symbol_resolver import SymbolResolver
 
 from codal.codal_report_service import CodalReportService
+from codal.sheet_loader import CodalSheetLoader
+from codal.sheet_selector import SheetSelector
 from codal.financial_adapter import FinancialAdapter
 from codal.balance_sheet_parser import BalanceSheetParser
 
@@ -19,60 +21,9 @@ from analysis.report_generator import ReportGenerator
 class AnalyzerEngine:
 
 
-    def __init__(
-        self,
-        symbol
-    ):
+    def __init__(self, symbol):
 
         self.symbol = symbol
-
-
-
-    def build_sheet_url(
-        self,
-        base_url,
-        sheet_id
-    ):
-
-
-        if "sheetId=" in base_url:
-
-            before = base_url.split(
-                "sheetId="
-            )[0]
-
-
-            return (
-
-                before +
-
-                f"sheetId={sheet_id}"
-
-            )
-
-
-        separator = (
-
-            "&"
-
-            if "?" in base_url
-
-            else
-
-            "?"
-
-        )
-
-
-        return (
-
-            base_url +
-
-            separator +
-
-            f"sheetId={sheet_id}"
-
-        )
 
 
 
@@ -85,20 +36,15 @@ class AnalyzerEngine:
 
         resolver = SymbolResolver()
 
-
         ins_code = resolver.find_ins_code(
-
             self.symbol
-
         )
 
 
         if not ins_code:
 
             raise ValueError(
-
                 "Symbol not found"
-
             )
 
 
@@ -111,39 +57,27 @@ class AnalyzerEngine:
 
 
         closing = api.get_closing_price(
-
             ins_code
-
         )
 
 
         info = api.get_instrument_info(
-
             ins_code
-
         )
 
 
         market = MarketData(
-
             closing,
-
             info
-
         )
 
 
         live = market.report()
 
 
-
         company_name = (
 
-            api.get_company_name(
-
-                info
-
-            )
+            api.get_company_name(info)
 
             or
 
@@ -154,33 +88,102 @@ class AnalyzerEngine:
 
 
         # =========================
-        # Codal
+        # Codal Report
         # =========================
 
         codal_service = CodalReportService(
-
             self.symbol
-
         )
 
 
-        codal_url = codal_service.get_report_url()
+        codal_report = codal_service.get_latest_financial_report()
 
 
+        if not codal_report:
 
-        income_url = self.build_sheet_url(
+            raise ValueError(
+                "No financial report selected"
+            )
 
-            codal_url,
 
-            1
-
+        report_url = codal_report.get(
+            "url"
         )
 
+
+        if not report_url:
+
+            raise ValueError(
+                "Report URL not found"
+            )
+
+
+
+        # =========================
+        # Load Sheets
+        # =========================
+
+        loader = CodalSheetLoader(
+            report_url
+        )
+
+
+        sheets = loader.get_sheet_options()
+
+
+
+        selector = SheetSelector(
+            sheets
+        )
+
+
+        selected = selector.report()
+
+
+
+        income_sheet = selected.get(
+            "income_statement"
+        )
+
+
+        balance_sheet = selected.get(
+            "balance_sheet"
+        )
+
+
+
+        if not income_sheet:
+
+            raise ValueError(
+                "Income statement sheet not found"
+            )
+
+
+        if not balance_sheet:
+
+            raise ValueError(
+                "Balance sheet sheet not found"
+            )
+
+
+
+        income_url = income_sheet.get(
+            "url"
+        )
+
+
+        balance_url = balance_sheet.get(
+            "url"
+        )
+
+
+
+        # =========================
+        # Financial Data
+        # =========================
 
         financial = FinancialAdapter(
-
             income_url
-
         )
 
 
@@ -192,19 +195,8 @@ class AnalyzerEngine:
         # Balance Sheet
         # =========================
 
-        balance_url = self.build_sheet_url(
-
-            codal_url,
-
-            0
-
-        )
-
-
         balance_parser = BalanceSheetParser(
-
             balance_url
-
         )
 
 
@@ -213,35 +205,26 @@ class AnalyzerEngine:
 
 
         assets = balance.get(
-
             "assets",
-
             0
-
         )
 
 
         equity = balance.get(
-
             "equity",
-
             0
-
         )
 
 
         liabilities = balance.get(
-
             "liabilities",
-
             0
-
         )
 
 
 
         # =========================
-        # Company Object
+        # Company
         # =========================
 
         company = Company(
@@ -263,11 +246,8 @@ class AnalyzerEngine:
             market_cap=live["market_cap"],
 
             non_operating_income=data.get(
-
                 "non_operating_income",
-
                 0
-
             )
 
         )
@@ -397,7 +377,6 @@ class AnalyzerEngine:
             )
 
         )
-
 
 
         return {
