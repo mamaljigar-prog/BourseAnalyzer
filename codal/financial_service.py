@@ -1,19 +1,21 @@
-# codal/financial_service.py
-
 from codal.codal_adapter import CodalAdapter
 from codal.report_selector import ReportSelector
 from codal.codal_profit_loss_parser import CodalProfitLossParser
 from codal.financial_mapper import FinancialMapper
 from codal.balance_sheet_parser import BalanceSheetParser
+from codal.sheet_loader import CodalSheetLoader
+from codal.sheet_selector import SheetSelector
 
-from financial.financial_statement import FinancialStatement
+from financial.financial_statement_assembler import FinancialStatementAssembler
 
 
 class FinancialService:
 
+
     def __init__(self, symbol):
 
         self.symbol = symbol
+
 
 
     def build_url(self, report):
@@ -23,6 +25,7 @@ class FinancialService:
             +
             report["url"]
         )
+
 
 
     def get_financial_data(self):
@@ -37,20 +40,24 @@ class FinancialService:
         monthly_reports = adapter.find_monthly_reports()
 
 
+
         selector = ReportSelector(
             financial_reports,
             monthly_reports
         )
 
 
+
         latest_financial = selector.latest_complete_financial()
+
 
 
         if not latest_financial:
 
             return {
-                "error": "گزارش صورت مالی پیدا نشد"
+                "error": "گزارش مالی پیدا نشد"
             }
+
 
 
         print("================")
@@ -60,9 +67,42 @@ class FinancialService:
         )
 
 
+
         url = self.build_url(
             latest_financial
         )
+
+
+
+        sheets = CodalSheetLoader(
+            url
+        ).get_sheet_options()
+
+
+
+        selected_sheets = SheetSelector(
+            sheets
+        ).report()
+
+
+
+        income_sheet = selected_sheets.get(
+            "income_statement"
+        )
+
+
+        balance_sheet = selected_sheets.get(
+            "balance_sheet"
+        )
+
+
+
+        if not income_sheet:
+
+            return {
+                "error": "شیت سود و زیان پیدا نشد"
+            }
+
 
 
         # -------------------------
@@ -70,56 +110,12 @@ class FinancialService:
         # -------------------------
 
         profit_parser = CodalProfitLossParser(
-            url
+            income_sheet["url"]
         )
 
 
-        sheets = profit_parser.extract_sheets()
+        cells = profit_parser.get_cells()
 
-
-        cells = []
-
-
-        print()
-        print("AVAILABLE SHEETS:")
-
-
-        for sheet in sheets:
-
-            title = sheet.get(
-                "title_Fa",
-                ""
-            )
-
-            print(title)
-
-
-            if (
-                "سود" in title
-                or
-                "عملکرد" in title
-                or
-                "صورت‌های مالی" in title
-            ):
-
-                for table in sheet.get(
-                    "tables",
-                    []
-                ):
-
-                    cells.extend(
-                        table.get(
-                            "cells",
-                            []
-                        )
-                    )
-
-
-        if not cells:
-
-            return {
-                "error": "سلول مالی پیدا نشد"
-            }
 
 
         mapper = FinancialMapper(
@@ -127,13 +123,7 @@ class FinancialService:
         )
 
 
-        financial_data = mapper.map_financials()
-
-
-
-        statement = FinancialStatement(
-            financial_data
-        )
+        profit_data = mapper.map_financials()
 
 
 
@@ -150,41 +140,36 @@ class FinancialService:
         }
 
 
-        try:
 
-            balance_parser = BalanceSheetParser(
-                url
-            )
+        if balance_sheet:
 
+            try:
 
-            balance_data = balance_parser.get_balance_data()
-
-
-        except Exception as e:
-
-            print(
-                "Balance Error:",
-                e
-            )
+                balance_parser = BalanceSheetParser(
+                    balance_sheet["url"]
+                )
 
 
-
-        statement.assets = balance_data.get(
-            "assets",
-            0
-        )
+                balance_data = balance_parser.get_balance_data()
 
 
-        statement.equity = balance_data.get(
-            "equity",
-            0
-        )
+            except Exception as e:
+
+                print(
+                    "Balance Error:",
+                    e
+                )
 
 
-        statement.liabilities = balance_data.get(
-            "liabilities",
-            0
-        )
+
+        # -------------------------
+        # ترکیب نهایی
+        # -------------------------
+
+        statement = FinancialStatementAssembler(
+            profit_data,
+            balance_data
+        ).build()
 
 
 
@@ -202,7 +187,7 @@ if __name__ == "__main__":
 
 
     service = FinancialService(
-        "فزر"
+        "خراسان"
     )
 
 
@@ -213,6 +198,7 @@ if __name__ == "__main__":
     print("================")
 
 
+
     if "error" in result:
 
         print(
@@ -220,12 +206,6 @@ if __name__ == "__main__":
         )
 
     else:
-
-        print(
-            result["report"]
-        )
-
-        print("================")
 
         print(
             result["statement"].to_dict()

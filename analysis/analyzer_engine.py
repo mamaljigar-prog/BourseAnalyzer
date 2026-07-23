@@ -5,13 +5,16 @@ from tsetmc.tsetmc_market import MarketData
 
 from codal.financial_adapter import FinancialAdapter
 from codal.balance_sheet_parser import BalanceSheetParser
+from codal.sheet_loader import CodalSheetLoader
+from codal.sheet_selector import SheetSelector
+
+from financial.balance_sheet_mapper import BalanceSheetMapper
 
 from valuation.valuation_model import calculate_valuation
 
 from analysis.profit_quality import ProfitQualityAnalyzer
 from analysis.final_analyzer import FinalAnalyzer
 from analysis.report_generator import ReportGenerator
-
 
 
 class AnalyzerEngine:
@@ -118,33 +121,59 @@ class AnalyzerEngine:
         )
 
 
-        balance_parser = BalanceSheetParser(
+        sheets = CodalSheetLoader(
             balance_url
+        ).get_sheet_options()
+
+
+        balance_sheet = SheetSelector(
+            sheets
+        ).report()["balance_sheet"]
+
+
+        balance_parser = BalanceSheetParser(
+            balance_sheet["url"]
         )
 
 
-        balance = balance_parser.get_balance_data()
-
-
-
-        assets = balance.get(
-            "assets",
-            0
+        sheet = balance_parser.find_balance_sheet(
+            balance_parser.extract_sheets()
         )
 
 
-        equity = balance.get(
-            "equity",
-            0
+        cells = balance_parser.get_balance_table(
+            sheet
+        )["cells"]
+
+
+        balance_data = BalanceSheetMapper(
+            cells
+        ).map()
+
+
+        balance = balance_data.to_dict()
+
+
+        balance["balanced"] = (
+            balance["assets"]
+            ==
+            balance["liabilities"]
+            +
+            balance["equity"]
         )
 
 
-        liabilities = balance.get(
-            "liabilities",
-            0
-        )
+        assets = balance["assets"]
+
+        equity = balance["equity"]
+
+        liabilities = balance["liabilities"]
 
 
+
+        # -------------------------
+        # Company
+        # -------------------------
 
         company = Company(
 
@@ -276,10 +305,7 @@ class AnalyzerEngine:
 
             (
                 "Healthy"
-                if balance.get(
-                    "balanced",
-                    False
-                )
+                if balance["balanced"]
                 else
                 "Warning"
             )

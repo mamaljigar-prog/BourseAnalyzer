@@ -1,6 +1,8 @@
 import json
 import requests
 
+from financial.balance_sheet_mapper import BalanceSheetMapper
+
 
 class BalanceSheetParser:
 
@@ -27,28 +29,19 @@ class BalanceSheetParser:
     def extract_datasource(self):
 
         response = requests.get(
-
             self.url,
-
             headers=self.headers,
-
             timeout=30
-
         )
 
-
         response.raise_for_status()
-
 
         html = response.text
 
 
         markers = [
-
             "var datasource =",
-
             "var datasource="
-
         ]
 
 
@@ -60,7 +53,6 @@ class BalanceSheetParser:
             start = html.find(marker)
 
             if start != -1:
-
                 break
 
 
@@ -74,11 +66,8 @@ class BalanceSheetParser:
 
 
         json_start = html.find(
-
             "{",
-
             start
-
         )
 
 
@@ -94,9 +83,7 @@ class BalanceSheetParser:
 
 
         datasource, _ = decoder.raw_decode(
-
             html[json_start:]
-
         )
 
 
@@ -104,24 +91,20 @@ class BalanceSheetParser:
 
 
 
-    def extract_sheets(self):
 
+    def extract_sheets(self):
 
         datasource = self.extract_datasource()
 
-
         return datasource.get(
-
             "sheets",
-
             []
-
         )
 
 
 
-    def normalize(self, value):
 
+    def normalize(self, value):
 
         if value is None:
 
@@ -131,19 +114,13 @@ class BalanceSheetParser:
         text = str(value)
 
 
-
         chars = [
 
             "\u200b",
-
             "\u200c",
-
             "\u200d",
-
             "\u200e",
-
             "\u200f",
-
             "\ufeff",
 
         ]
@@ -152,114 +129,26 @@ class BalanceSheetParser:
         for char in chars:
 
             text = text.replace(
-
                 char,
-
                 ""
-
             )
 
 
-
         text = text.replace(
-
-            "ي",
-
-            "ی"
-
+            "ÙŠ",
+            "ÛŒ"
         )
 
-
         text = text.replace(
-
-            "ى",
-
-            "ی"
-
-        )
-
-
-        text = text.replace(
-
-            "ك",
-
-            "ک"
-
-        )
-
-
-        text = text.replace(
-
-            "ـ",
-
-            ""
-
+            "Ùƒ",
+            "Ú©"
         )
 
 
         return "".join(
-
             text.split()
-
         ).strip()
 
-
-
-    def parse_number(self, value):
-
-
-        if value is None:
-
-            return 0
-
-
-        text = str(value).strip()
-
-
-        if not text:
-
-            return 0
-
-
-
-        translation = str.maketrans(
-
-            "۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩",
-
-            "01234567890123456789"
-
-        )
-
-
-        text = text.translate(
-
-            translation
-
-        )
-
-
-        text = (
-
-            text
-
-            .replace(",", "")
-
-            .replace("٬", "")
-
-            .replace(" ", "")
-
-        )
-
-
-
-        try:
-
-            return int(float(text))
-
-
-        except:
-
-            return 0
 
 
 
@@ -267,7 +156,6 @@ class BalanceSheetParser:
 
 
         print()
-
         print(
             "AVAILABLE SHEETS:"
         )
@@ -275,22 +163,12 @@ class BalanceSheetParser:
 
         for sheet in sheets:
 
-
-            title = sheet.get(
-
-                "title_Fa",
-
-                ""
-
-            )
-
-
             print(
-
-                title
-
+                sheet.get(
+                    "title_Fa",
+                    ""
+                )
             )
-
 
 
         print()
@@ -300,11 +178,8 @@ class BalanceSheetParser:
         keywords = [
 
             "صورتوضعیتمالی",
-
             "ترازنامه",
-
             "وضعیتمالی",
-
             "balancesheet"
 
         ]
@@ -315,29 +190,18 @@ class BalanceSheetParser:
 
 
             title_fa = self.normalize(
-
                 sheet.get(
-
                     "title_Fa",
-
                     ""
-
                 )
-
             )
 
 
-
             title_en = self.normalize(
-
                 sheet.get(
-
                     "title_En",
-
                     ""
-
                 )
-
             ).lower()
 
 
@@ -361,15 +225,12 @@ class BalanceSheetParser:
 
 
 
+
     def get_balance_table(self, balance_sheet):
 
-
         tables = balance_sheet.get(
-
             "tables",
-
             []
-
         )
 
 
@@ -382,64 +243,6 @@ class BalanceSheetParser:
 
 
 
-    def get_cell_value(self, cells, address):
-
-
-        for cell in cells:
-
-
-            if cell.get(
-
-                "address"
-
-            ) == address:
-
-
-                return self.parse_number(
-
-                    cell.get(
-
-                        "value"
-
-                    )
-
-                )
-
-
-
-        return 0
-
-
-
-    def get_cell_text(self, cells, address):
-
-
-        for cell in cells:
-
-
-            if cell.get(
-
-                "address"
-
-            ) == address:
-
-
-                return self.normalize(
-
-                    cell.get(
-
-                        "value",
-
-                        ""
-
-                    )
-
-                )
-
-
-        return ""
-
-
 
     def get_balance_data(self):
 
@@ -447,126 +250,75 @@ class BalanceSheetParser:
         sheets = self.extract_sheets()
 
 
-
         balance_sheet = self.find_balance_sheet(
-
             sheets
-
         )
 
 
 
         if balance_sheet is None:
 
-
-            print(
-
-                "Balance sheet not found"
-
-            )
-
-
             return {
 
                 "assets": 0,
-
                 "equity": 0,
-
                 "liabilities": 0,
-
+                "non_controlling_interest": 0,
                 "total": 0,
-
                 "balanced": False
 
             }
 
 
 
+
         table = self.get_balance_table(
-
             balance_sheet
-
         )
 
 
 
         if table is None:
 
-
             return {
 
                 "assets": 0,
-
                 "equity": 0,
-
                 "liabilities": 0,
-
+                "non_controlling_interest": 0,
                 "total": 0,
-
                 "balanced": False
 
             }
 
 
 
+
         cells = table.get(
-
             "cells",
-
             []
-
         )
 
 
 
-        assets = self.get_cell_value(
-
-            cells,
-
-            "B22"
-
-        )
-
-
-        equity = self.get_cell_value(
-
-            cells,
-
-            "B35"
-
-        )
-
-
-        liabilities = self.get_cell_value(
-
-            cells,
-
-            "B53"
-
-        )
-
-
-        total = self.get_cell_value(
-
-            cells,
-
-            "B54"
-
-        )
+        result = BalanceSheetMapper(
+            cells
+        ).map()
 
 
 
         balanced = (
 
-            assets != 0
+            result.assets > 0
 
             and
 
-            equity + liabilities == total
-
-            and
-
-            assets == total
+            result.assets ==
+            result.liabilities
+            +
+            result.equity
+            +
+            result.non_controlling_interest
 
         )
 
@@ -581,25 +333,25 @@ class BalanceSheetParser:
 
         print(
             "Assets:",
-            assets
+            result.assets
         )
 
 
         print(
             "Equity:",
-            equity
+            result.equity
         )
 
 
         print(
             "Liabilities:",
-            liabilities
+            result.liabilities
         )
 
 
         print(
-            "Total:",
-            total
+            "Non Controlling Interest:",
+            result.non_controlling_interest
         )
 
 
@@ -612,21 +364,33 @@ class BalanceSheetParser:
 
         return {
 
-            "assets": assets,
+            "assets":
+                result.assets,
 
-            "equity": equity,
 
-            "liabilities": liabilities,
+            "equity":
+                result.equity,
 
-            "total": total,
 
-            "balanced": balanced
+            "liabilities":
+                result.liabilities,
+
+
+            "non_controlling_interest":
+                result.non_controlling_interest,
+
+
+            "total":
+                result.assets,
+
+
+            "balanced":
+                balanced
 
         }
 
 
 
 if __name__ == "__main__":
-
 
     pass

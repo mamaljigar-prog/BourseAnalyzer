@@ -4,190 +4,419 @@
 
 Date: 1405/04/31
 
----
+Checkpoint:
+Stable after:
 
-## Completed
-
-### Environment
-- Python environment آماده است.
-- پروژه در Windows + VS Code اجرا می‌شود.
-- اجرای ماژول‌ها با:
-  python -m module.path
+* Forecast logic restoration
+* Report selection testing
+* Balance sheet extraction validation
 
 ---
 
-## Codal Layer
+# Environment
+
+Status: Ready
+
+Completed:
+
+✅ Python environment آماده است.
+✅ پروژه روی Windows + VS Code اجرا می‌شود.
+✅ اجرای ماژول‌ها:
+
+```text
+python -m module.path
+```
+
+---
+
+# Codal Layer
 
 Status: Working
 
 Completed:
 
-✅ CodalAdapter
-- دریافت گزارش‌ها از کدال
+## CodalAdapter
 
-✅ ReportSelector
-- انتخاب جدیدترین گزارش مالی
+وظیفه:
 
-✅ CodalProfitLossParser
-- استخراج شیت‌ها و سلول‌های مالی
+* دریافت گزارش‌های مالی از کدال
+* استخراج گزارش‌های موجود
+* دریافت URL گزارش
 
----
+## ReportSelector
 
-## Financial Mapping
-
-Status: Initial Stable Version
+Status:
+Initial stable version
 
 Completed:
 
-✅ FinancialConceptMapper
+* تفکیک گزارش سالانه و میان‌دوره‌ای
+* انتخاب گزارش سالانه حسابرسی‌شده
+* انتخاب گزارش میان‌دوره‌ای جدید
 
-تشخیص:
+Important rule:
 
-- sales
-- gross_profit
-- operating_profit
-- net_profit
-- non_operating_income
+گزارش جدید همیشه جایگزین گزارش سالانه نمی‌شود.
 
+منطق:
 
-تست شده روی:
+```text
+Annual Report
+      |
+      ↓
+Primary Analysis Base
 
-1. خراسان
-- موفق
-
-2. شپنا
-- موفق
-
-3. فزر
-- موفق
-
-
-مشکل قبلی:
-- net_profit اشتباه برابر gross_profit تشخیص داده می‌شد.
-
-حل شد با:
-- scoring matching
-- exclude words
-- انتخاب تطبیقی ردیف‌ها
+Interim Report
+      |
+      ↓
+Performance Update
+```
 
 ---
 
-## FinancialStatement Layer
+# Financial Mapping Layer
+
+Status: Stable Initial Version
+
+Completed:
+
+## FinancialConceptMapper
+
+تشخیص:
+
+* sales
+* gross_profit
+* operating_profit
+* net_profit
+* non_operating_income
+
+Tested:
+
+### خراسان
+
+✅ موفق
+
+### شپنا
+
+✅ موفق
+
+### فزر
+
+✅ موفق
+
+مشکل قبلی:
+
+* net_profit اشتباه برابر gross_profit تشخیص داده می‌شد.
+
+حل شده با:
+
+* scoring matching
+* exclude words
+* adaptive row selection
+
+---
+
+# FinancialStatement Layer
 
 Status: Created
 
-مسیر:
+Path:
 
+```text
 financial/
  ├── __init__.py
  └── financial_statement.py
-
+```
 
 هدف:
 
 جدا کردن داده خام کدال از موتور تحلیل.
 
+Current fields:
 
-فعلاً شامل:
+* revenue
+* gross_profit
+* operating_profit
+* net_profit
+* non_operating_income
 
-- revenue
-- gross_profit
-- operating_profit
-- net_profit
-- non_operating_income
+Ready for expansion:
 
-
-آماده توسعه:
-
-- assets
-- liabilities
-- equity
-- operating_cash_flow
-
+* assets
+* liabilities
+* equity
+* operating_cash_flow
 
 ---
 
-## Current Data Flow
+# Balance Sheet Layer
 
-Codal
- ↓
-Parser
- ↓
-FinancialMapper
- ↓
-FinancialStatement
- ↓
-(Next)
-Valuation Engine
+Status: Working Initial Version
 
+Completed:
 
----
-
-## Next Tasks
-
-Priority 1:
-
-ساخت Balance Sheet Mapper
-
-هدف:
+## BalanceSheetParser
 
 استخراج:
 
-- Total Assets
-- Total Liabilities
-- Equity
+* Total Assets
+* Equity
+* Liabilities
+* Balance validation
 
+تست شده روی:
 
-اتصال به:
+* خراسان
+* پترول
+* درهآور
+* فسبزوار
+* غشاذر
+* پکویر
+* فولاد
+* فارس
+* شپنا
+* کگل
+* کچاد
+* رمپنا
+* تاپیکو
 
-FinancialStatement
+Current limitation:
 
+برخی شرکت‌ها نیازمند تشخیص ساختار هستند:
 
-برای آماده شدن:
-
-- P/B
-- P/A
-- تحلیل ساختار مالی
-
+* هلدینگ‌ها
+* شرکت‌های دارای زیرمجموعه مهم
+* بانک‌ها
+* بیمه‌ها
 
 ---
 
-## Coding Rules
+# Current Data Flow
 
-Rule #1:
+```text
+Codal
+  ↓
+Parser
+  ↓
+FinancialConceptMapper
+  ↓
+FinancialStatement
+  ↓
+Balance Sheet Data
+  ↓
+Forecast Engine
+  ↓
+Valuation Engine
+```
+
+---
+
+# Company Structure Classification Layer
+
+Status:
+Next Major Task
+
+هدف:
+
+تشخیص نوع شرکت قبل از تحلیل.
+
+Categories:
+
+## Production Company
+
+Examples:
+
+* خراسان
+* فولاد
+* کگل
+* کچاد
+
+Model:
+
+* Sales
+* Profit
+* Margin
+* Forward Multiples
+
+---
+
+## Group / Subsidiary Based Company
+
+Examples:
+
+* فزر
+* پترول
+
+نیاز:
+
+بررسی همزمان:
+
+* صورت مالی اصلی
+* صورت مالی تلفیقی
+
+---
+
+## Holding Company
+
+Examples:
+
+* فارس
+* تاپیکو
+
+Future:
+
+NAV Model
+
+---
+
+## Bank
+
+Example:
+
+* وبملت
+
+Future:
+
+Banking Model
+
+---
+
+## Insurance
+
+Future:
+
+Insurance Model
+
+---
+
+# Forecast Engine
+
+Status:
+Working
+
+Completed:
+
+Annual forecasting based on financial period.
+
+Outputs:
+
+* Forecast Sales
+* Forecast Profit
+* Net Margin
+
+Example خراسان:
+
+* Sales Growth: 33.33%
+* Profit Growth: 33.33%
+* Forward P/E: ~5.7
+
+---
+
+# Valuation Engine
+
+Status:
+Working
+
+Supported:
+
+* Forward P/E
+* Forward P/S
+* Forward P/D
+* P/B
+* P/A
+
+Rules:
+
+❌ استفاده از P/E تاسیسات TSETMC ممنوع
+
+✅ محاسبه نسبت‌ها از داده مالی استخراج‌شده
+
+---
+
+# Profit Quality Analysis
+
+Status:
+Working
+
+Checks:
+
+* Operating Profit
+* Non Operating Income
+
+هدف:
+
+تشخیص سودهای غیرتکرارشونده.
+
+---
+
+# Coding Rules
+
+## Rule #1
 
 در پروژه فقط فایل کامل جایگزین ارائه شود.
 
 ممنوع:
 
-- تکه کد
-- patch
-- تغییر دستی چند خطی
-
+* تکه کد
+* patch
+* تغییر دستی چند خطی
 
 هر تغییر:
-- مسیر فایل مشخص
-- کل فایل ارائه شود
 
+* مسیر فایل مشخص
+* کل فایل ارائه شود
 
 ---
 
-## Financial Analysis Rules
+# Financial Analysis Rules
 
-- استفاده از P/E خود TSETMC ممنوع.
-- محاسبه نسبت‌ها از داده مالی استخراج‌شده انجام می‌شود.
-- سودهای غیرتکرارشونده باید جدا شوند.
-- تمرکز تحلیل اصلی روی یک دوره مالی.
-- روند ۵ ساله بعداً برای کیفیت و رشد استفاده می‌شود.
+* P/E از TSETMC استفاده نمی‌شود.
+* نسبت‌ها از داده مالی محاسبه می‌شوند.
+* سودهای غیرتکرارشونده جدا می‌شوند.
+* تمرکز تحلیل اصلی روی یک دوره مالی است.
+* روند ۵ ساله فعلاً خارج از محدوده اصلی است و بعداً برای کیفیت و رشد استفاده می‌شود.
 
-هدف نهایی:
+---
 
-محاسبه:
+# Final Goal
 
-- Forward P/E
-- Forward P/S
-- Forward P/D
-- P/B
-- P/A
+ساخت موتور تحلیل که بتواند:
 
-و رتبه‌بندی شرکت‌ها بر اساس رشد و ارزش.
+* Forward P/E
+* Forward P/S
+* Forward P/D
+* P/B
+* P/A
+
+را محاسبه کند.
+
+و شرکت‌ها را بر اساس:
+
+* رشد
+* کیفیت سود
+* ارزش‌گذاری
+* ساختار مالی
+
+رتبه‌بندی کند.
+
+---
+
+# Next Priority
+
+## Priority 1
+
+Company Structure Classification
+
+بعد از آن:
+
+## Priority 2
+
+Dynamic Balance Sheet Mapping
+
+## Priority 3
+
+Advanced Models:
+
+* NAV
+* Bank Analysis
+* Insurance Analysis

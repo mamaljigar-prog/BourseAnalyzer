@@ -8,8 +8,10 @@ class FinancialStatement:
             data = {}
 
 
+
         self.revenue = data.get(
-            "sales"
+            "sales",
+            data.get("revenue")
         )
 
 
@@ -33,15 +35,30 @@ class FinancialStatement:
         )
 
 
-        # مراحل بعدی پروژه
+        self.assets = data.get(
+            "assets"
+        )
 
-        self.assets = None
 
-        self.liabilities = None
+        self.liabilities = data.get(
+            "liabilities"
+        )
 
-        self.equity = None
 
-        self.operating_cash_flow = None
+        self.equity = data.get(
+            "equity"
+        )
+
+
+        # مخصوص صورت‌های مالی تلفیقی
+        self.non_controlling_interest = data.get(
+            "non_controlling_interest"
+        )
+
+
+        self.operating_cash_flow = data.get(
+            "operating_cash_flow"
+        )
 
 
 
@@ -49,32 +66,25 @@ class FinancialStatement:
 
         return {
 
-            "revenue":
-                self.revenue,
+            "revenue": self.revenue,
 
-            "gross_profit":
-                self.gross_profit,
+            "gross_profit": self.gross_profit,
 
-            "operating_profit":
-                self.operating_profit,
+            "operating_profit": self.operating_profit,
 
-            "net_profit":
-                self.net_profit,
+            "net_profit": self.net_profit,
 
-            "non_operating_income":
-                self.non_operating_income,
+            "non_operating_income": self.non_operating_income,
 
-            "assets":
-                self.assets,
+            "assets": self.assets,
 
-            "liabilities":
-                self.liabilities,
+            "liabilities": self.liabilities,
 
-            "equity":
-                self.equity,
+            "equity": self.equity,
 
-            "operating_cash_flow":
-                self.operating_cash_flow
+            "non_controlling_interest": self.non_controlling_interest,
+
+            "operating_cash_flow": self.operating_cash_flow
 
         }
 
