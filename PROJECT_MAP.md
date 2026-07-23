@@ -5,11 +5,36 @@
 Date: 1405/04/31
 
 Checkpoint:
+
 Stable after:
 
 * Forecast logic restoration
-* Report selection testing
+* Codal report selection testing
+* Financial mapping validation
 * Balance sheet extraction validation
+* Git local checkpoint + GitHub sync
+
+---
+
+# Repository Status
+
+## Git
+
+Status:
+
+✅ Local repository saved
+✅ Commit created
+✅ GitHub main branch synchronized
+
+Latest checkpoint:
+
+```
+Initial BourseAnalyzer checkpoint
+```
+
+Purpose:
+
+بازگشت امن در صورت ایجاد خطا در مراحل بعدی توسعه.
 
 ---
 
@@ -20,8 +45,8 @@ Status: Ready
 Completed:
 
 ✅ Python environment آماده است.
-✅ پروژه روی Windows + VS Code اجرا می‌شود.
-✅ اجرای ماژول‌ها:
+✅ Windows + VS Code setup فعال است.
+✅ اجرای ماژول‌ها با:
 
 ```text
 python -m module.path
@@ -35,42 +60,37 @@ Status: Working
 
 Completed:
 
-## CodalAdapter
+## CodalReportService
 
 وظیفه:
 
-* دریافت گزارش‌های مالی از کدال
-* استخراج گزارش‌های موجود
+* دریافت گزارش مالی شرکت
+* انتخاب گزارش مناسب
 * دریافت URL گزارش
 
-## ReportSelector
+---
 
-Status:
-Initial stable version
+## SheetLoader
 
 Completed:
 
-* تفکیک گزارش سالانه و میان‌دوره‌ای
-* انتخاب گزارش سالانه حسابرسی‌شده
-* انتخاب گزارش میان‌دوره‌ای جدید
+* دریافت شیت‌های گزارش
+* تشخیص جدول‌های مالی
 
-Important rule:
+---
 
-گزارش جدید همیشه جایگزین گزارش سالانه نمی‌شود.
+## SheetSelector
 
-منطق:
+Status:
 
-```text
-Annual Report
-      |
-      ↓
-Primary Analysis Base
+Initial stable version
 
-Interim Report
-      |
-      ↓
-Performance Update
-```
+وظیفه:
+
+تفکیک:
+
+* صورت سود و زیان
+* صورت وضعیت مالی
 
 ---
 
@@ -90,29 +110,22 @@ Completed:
 * net_profit
 * non_operating_income
 
-Tested:
+حل مشکلات:
 
-### خراسان
+* تشخیص اشتباه net_profit
+* انتخاب اشتباه ردیف‌های مالی
 
-✅ موفق
-
-### شپنا
-
-✅ موفق
-
-### فزر
-
-✅ موفق
-
-مشکل قبلی:
-
-* net_profit اشتباه برابر gross_profit تشخیص داده می‌شد.
-
-حل شده با:
+روش فعلی:
 
 * scoring matching
 * exclude words
 * adaptive row selection
+
+تست شده:
+
+✅ خراسان
+✅ شپنا
+✅ فزر
 
 ---
 
@@ -124,13 +137,23 @@ Path:
 
 ```text
 financial/
- ├── __init__.py
- └── financial_statement.py
+
+├── __init__.py
+├── financial_statement.py
+├── financial_service.py
+├── financial_statement_assembler.py
+└── balance_sheet_mapper.py
 ```
 
 هدف:
 
-جدا کردن داده خام کدال از موتور تحلیل.
+جدا کردن:
+
+Codal Raw Data
+
+از
+
+Analysis Engine
 
 Current fields:
 
@@ -151,7 +174,9 @@ Ready for expansion:
 
 # Balance Sheet Layer
 
-Status: Working Initial Version
+Status:
+
+Working Initial Version
 
 Completed:
 
@@ -164,63 +189,166 @@ Completed:
 * Liabilities
 * Balance validation
 
-تست شده روی:
+---
 
-* خراسان
-* پترول
-* درهآور
-* فسبزوار
-* غشاذر
-* پکویر
-* فولاد
-* فارس
-* شپنا
-* کگل
-* کچاد
-* رمپنا
-* تاپیکو
+## BalanceSheetMapper
 
-Current limitation:
+Status:
 
-برخی شرکت‌ها نیازمند تشخیص ساختار هستند:
+Initial stable
 
-* هلدینگ‌ها
-* شرکت‌های دارای زیرمجموعه مهم
-* بانک‌ها
-* بیمه‌ها
+وظیفه:
+
+تطبیق ساختارهای مختلف صورت وضعیت مالی.
+
+پشتیبانی:
+
+* گزارش مستقل
+* گزارش تلفیقی
+* تغییر شماره ردیف‌ها
+
+Validation:
+
+فرمول کنترل:
+
+```text
+Assets =
+Equity
++
+Non Controlling Interest
++
+Liabilities
+```
+
+تست موفق:
+
+✅ شپنا
+✅ خراسان
 
 ---
 
 # Current Data Flow
 
 ```text
-Codal
-  ↓
-Parser
-  ↓
-FinancialConceptMapper
-  ↓
-FinancialStatement
-  ↓
-Balance Sheet Data
-  ↓
+Codal Report
+      ↓
+Sheet Loader
+      ↓
+Sheet Selector
+      ↓
+Financial Parser
+      ↓
+Financial Concept Mapper
+      ↓
+Financial Statement
+      ↓
+Balance Sheet Mapper
+      ↓
 Forecast Engine
-  ↓
+      ↓
 Valuation Engine
+      ↓
+Final Analyzer
+      ↓
+Report Generator
 ```
+
+---
+
+# Forecast Engine
+
+Status:
+
+Working
+
+Current model:
+
+Annualized forecast based on latest financial period.
+
+Outputs:
+
+* Forecast Sales
+* Forecast Profit
+* Net Margin
+
+Example:
+
+خراسان:
+
+```
+Sales Growth:
+33.33%
+
+Profit Growth:
+33.33%
+
+Forward P/E:
+≈5.7
+```
+
+---
+
+# Valuation Engine
+
+Status:
+
+Working
+
+Supported:
+
+* Forward P/E
+* Forward P/S
+* Forward P/D
+* P/B
+* P/A
+
+Rules:
+
+❌ استفاده از P/E سایت TSETMC ممنوع
+
+✅ محاسبه نسبت‌ها فقط از داده مالی استخراج‌شده
+
+Formula:
+
+```text
+Forward P/E =
+Market Cap /
+Forecast Profit
+```
+
+---
+
+# Profit Quality Analysis
+
+Status:
+
+Working
+
+Checks:
+
+* Operating Profit
+* Non Operating Income
+
+هدف:
+
+تشخیص:
+
+* سود عملیاتی واقعی
+* سود غیرتکرارشونده
 
 ---
 
 # Company Structure Classification Layer
 
 Status:
+
 Next Major Task
 
 هدف:
 
 تشخیص نوع شرکت قبل از تحلیل.
 
-Categories:
+---
 
 ## Production Company
 
@@ -240,22 +368,6 @@ Model:
 
 ---
 
-## Group / Subsidiary Based Company
-
-Examples:
-
-* فزر
-* پترول
-
-نیاز:
-
-بررسی همزمان:
-
-* صورت مالی اصلی
-* صورت مالی تلفیقی
-
----
-
 ## Holding Company
 
 Examples:
@@ -263,17 +375,30 @@ Examples:
 * فارس
 * تاپیکو
 
-Future:
+Future Model:
 
-NAV Model
+NAV Analysis
+
+---
+
+## Group / Subsidiary Based Company
+
+Examples:
+
+* پترول
+* فزر
+
+نیاز:
+
+بررسی:
+
+* صورت مالی اصلی
+* صورت مالی تلفیقی
+* شرکت‌های مهم زیرمجموعه
 
 ---
 
 ## Bank
-
-Example:
-
-* وبملت
 
 Future:
 
@@ -289,63 +414,25 @@ Insurance Model
 
 ---
 
-# Forecast Engine
+# Financial Analysis Rules
 
-Status:
-Working
+قوانین ثابت پروژه:
 
-Completed:
+1. گزارش مالی جدید، پایه اصلی تحلیل است.
 
-Annual forecasting based on financial period.
+2. گزارش‌های قدیمی فقط برای:
 
-Outputs:
+* مقایسه
+* رشد
+* کیفیت داده
 
-* Forecast Sales
-* Forecast Profit
-* Net Margin
+استفاده می‌شوند.
 
-Example خراسان:
+3. روند ۵ ساله فعلاً خارج از محدوده اصلی است.
 
-* Sales Growth: 33.33%
-* Profit Growth: 33.33%
-* Forward P/E: ~5.7
+4. سود فروش دارایی و درآمد غیرعملیاتی غیرتکرارشونده نباید سود اصلی تلقی شود.
 
----
-
-# Valuation Engine
-
-Status:
-Working
-
-Supported:
-
-* Forward P/E
-* Forward P/S
-* Forward P/D
-* P/B
-* P/A
-
-Rules:
-
-❌ استفاده از P/E تاسیسات TSETMC ممنوع
-
-✅ محاسبه نسبت‌ها از داده مالی استخراج‌شده
-
----
-
-# Profit Quality Analysis
-
-Status:
-Working
-
-Checks:
-
-* Operating Profit
-* Non Operating Income
-
-هدف:
-
-تشخیص سودهای غیرتکرارشونده.
+5. برای هلدینگ‌ها تحلیل باید بر اساس NAV توسعه پیدا کند.
 
 ---
 
@@ -353,70 +440,84 @@ Checks:
 
 ## Rule #1
 
-در پروژه فقط فایل کامل جایگزین ارائه شود.
+هر تغییر کد:
+
+فقط با فایل کامل جایگزین انجام می‌شود.
 
 ممنوع:
 
-* تکه کد
 * patch
-* تغییر دستی چند خطی
+* تغییر چند خطی دستی
+* تکه کد ناقص
 
-هر تغییر:
+فرمت تغییر:
 
-* مسیر فایل مشخص
-* کل فایل ارائه شود
+```
+File Path:
 
----
-
-# Financial Analysis Rules
-
-* P/E از TSETMC استفاده نمی‌شود.
-* نسبت‌ها از داده مالی محاسبه می‌شوند.
-* سودهای غیرتکرارشونده جدا می‌شوند.
-* تمرکز تحلیل اصلی روی یک دوره مالی است.
-* روند ۵ ساله فعلاً خارج از محدوده اصلی است و بعداً برای کیفیت و رشد استفاده می‌شود.
+Complete Replacement Code
+```
 
 ---
 
-# Final Goal
-
-ساخت موتور تحلیل که بتواند:
-
-* Forward P/E
-* Forward P/S
-* Forward P/D
-* P/B
-* P/A
-
-را محاسبه کند.
-
-و شرکت‌ها را بر اساس:
-
-* رشد
-* کیفیت سود
-* ارزش‌گذاری
-* ساختار مالی
-
-رتبه‌بندی کند.
-
----
-
-# Next Priority
+# Next Development Priority
 
 ## Priority 1
 
 Company Structure Classification
 
-بعد از آن:
+هدف:
+
+قبل از valuation مشخص شود شرکت:
+
+* تولیدی است
+* هلدینگ است
+* بانک است
+* بیمه است
+
+---
 
 ## Priority 2
 
 Dynamic Balance Sheet Mapping
 
+هدف:
+
+پشتیبانی کامل از:
+
+* گزارش‌های مستقل
+* تلفیقی
+* هلدینگ‌ها
+
+---
+
 ## Priority 3
 
-Advanced Models:
+Advanced Models
 
-* NAV
-* Bank Analysis
-* Insurance Analysis
+شامل:
+
+* NAV Engine
+* Holding Analyzer
+* Bank Analyzer
+* Insurance Analyzer
+
+---
+
+# Final Goal
+
+ساخت موتور تحلیل بورس که بتواند:
+
+* داده مالی را از کدال استخراج کند
+* ساختار شرکت را تشخیص دهد
+* سود واقعی را ارزیابی کند
+* ارزش‌گذاری انجام دهد
+* شرکت‌ها را رتبه‌بندی کند
+
+بر اساس:
+
+* رشد
+* کیفیت سود
+* ارزش‌گذاری
+* ساختار مالی
+* ریسک بنیادی
