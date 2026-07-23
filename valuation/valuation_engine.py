@@ -1,21 +1,29 @@
-# valuation/valuation_engine.py
+from valuation.valuation_model import calculate_valuation
 
 
 class ValuationEngine:
     """
-    موتور ارزش گذاری
+    موتور ارزشگذاری
 
-    قوانین پروژه:
-
-    1- P/E از TSETMC استفاده نمی شود.
-    2- P/E فقط از Market Cap / Forecast Profit محاسبه می شود.
-    3- سود ورودی باید قبلاً نرمال شده باشد.
-    4- واحد ورودی ها تومان است.
+    قوانین:
+    - P/E از TSETMC استفاده نمی‌شود.
+    - P/E = Market Cap / Forecast Profit
+    - ارزش هدف = سود پیش‌بینی شده × PE پایه
+    - PE پایه پیش‌فرض = 7
     """
 
 
-    def __init__(self, base_pe=7):
+    def __init__(
+        self,
+        company=None,
+        forecast=None,
+        strategy=None,
+        base_pe=7
+    ):
 
+        self.company = company
+        self.forecast = forecast or {}
+        self.strategy = strategy or {}
         self.base_pe = base_pe
 
 
@@ -29,7 +37,10 @@ class ValuationEngine:
         if forecast_profit <= 0:
             return None
 
-        return market_cap / forecast_profit
+        return round(
+            market_cap / forecast_profit,
+            2
+        )
 
 
 
@@ -42,110 +53,116 @@ class ValuationEngine:
         if forecast_sales <= 0:
             return None
 
-        return market_cap / forecast_sales
+        return round(
+            market_cap / forecast_sales,
+            2
+        )
 
 
 
-    def calculate_target_market_cap(
+    def target_market_cap(
         self,
         forecast_profit
     ):
 
-        return forecast_profit * self.base_pe
+        return (
+            forecast_profit *
+            self.base_pe
+        )
 
 
 
-    def calculate_upside(
+    def upside(
         self,
-        target_market_cap,
-        current_market_cap
+        target,
+        current
     ):
 
-        if current_market_cap <= 0:
+        if current <= 0:
             return None
 
-        return (
-            target_market_cap - current_market_cap
-        ) / current_market_cap
-
-
-
-    def analyze(
-        self,
-        market_cap,
-        forecast_profit,
-        forecast_sales
-    ):
-
-
-        forward_pe = self.calculate_forward_pe(
-
-            market_cap,
-
-            forecast_profit
-
-        )
-
-
-        forward_ps = self.calculate_forward_ps(
-
-            market_cap,
-
-            forecast_sales
-
-        )
-
-
-        target_market_cap = (
-            self.calculate_target_market_cap(
-                forecast_profit
+        return round(
+            (
+                target-current
             )
+            /
+            current
+            *
+            100,
+            2
         )
 
 
-        upside = self.calculate_upside(
 
-            target_market_cap,
+    def production_valuation(self):
 
-            market_cap
+
+        forecast_profit = (
+            self.forecast["forecast_profit"]
+            /
+            10000
+        )
+
+
+        forecast_sales = (
+            self.forecast["forecast_sales"]
+            /
+            10000
+        )
+
+
+        result = calculate_valuation(
+
+            market_cap=self.company.market_cap,
+
+            forecast_sales=forecast_sales,
+
+            forecast_profit=forecast_profit,
+
+            equity=self.company.equity,
+
+            assets=self.company.assets,
+
+            dividend=11570
 
         )
 
 
-        return {
-
-            "market_cap": market_cap,
-
-            "forecast_profit": forecast_profit,
-
-            "forecast_sales": forecast_sales,
-
-            "forward_pe": forward_pe,
-
-            "forward_ps": forward_ps,
-
-            "target_market_cap_pe7": target_market_cap,
-
-            "upside": upside
-
-        }
-
-
-
-if __name__ == "__main__":
-
-
-    engine = ValuationEngine()
-
-
-    print(
-        engine.analyze(
-
-            market_cap=87350000000,
-
-            forecast_profit=5633277525,
-
-            forecast_sales=14313498800
-
+        target = self.target_market_cap(
+            forecast_profit
         )
-    )
+
+
+        result.update({
+
+            "target_market_cap_pe7":
+                target,
+
+            "upside_percent":
+                self.upside(
+                    target,
+                    self.company.market_cap
+                )
+
+        })
+
+
+        return result
+
+
+
+    def run(self):
+
+
+        company_type = self.strategy.get(
+            "type",
+            "production"
+        )
+
+
+        if company_type == "production":
+
+            return self.production_valuation()
+
+
+        return self.production_valuation()

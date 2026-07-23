@@ -1,14 +1,55 @@
 class AnalysisStrategy:
+    """
+    تعیین روش تحلیل بر اساس ساختار شرکت
 
+    Input:
+        classification dictionary
+
+    همچنین برای جلوگیری از خطای اتصال:
+        Company object
+        را نیز پشتیبانی می‌کند.
+    """
 
     def __init__(
         self,
         company_structure
     ):
 
-        self.company_structure = (
-            company_structure or {}
-        )
+        self.company_structure = {}
+
+        if isinstance(
+            company_structure,
+            dict
+        ):
+
+            self.company_structure = company_structure
+
+
+        else:
+
+            # Compatibility layer
+            # اگر Company object ارسال شد
+
+            company_type = getattr(
+                company_structure,
+                "company_type",
+                None
+            )
+
+            if company_type:
+
+                self.company_structure = {
+                    "type": company_type
+                }
+
+
+            else:
+
+                self.company_structure = {
+                    "type": "unknown"
+                }
+
+
 
         self.company_type = (
             self.company_structure.get(
@@ -20,6 +61,7 @@ class AnalysisStrategy:
 
 
     def get_strategy(self):
+
 
         if self.company_type == "production":
 
@@ -183,9 +225,7 @@ if __name__ == "__main__":
     strategy = AnalysisStrategy(
 
         {
-
             "type": "production"
-
         }
 
     )

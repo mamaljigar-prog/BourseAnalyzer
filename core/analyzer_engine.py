@@ -10,13 +10,15 @@ from codal.sheet_selector import SheetSelector
 from codal.financial_adapter import FinancialAdapter
 from codal.balance_sheet_parser import BalanceSheetParser
 
-from valuation.valuation_model import calculate_valuation
-
+from analysis.company_classifier import CompanyClassifier
+from analysis.analysis_strategy import AnalysisStrategy
 from analysis.profit_quality import ProfitQualityAnalyzer
 from analysis.final_analyzer import FinalAnalyzer
 from analysis.report_generator import ReportGenerator
-from analysis.company_classifier import CompanyClassifier
-from analysis.analysis_strategy import AnalysisStrategy
+
+from forecast.forecast_engine import ForecastEngine
+from valuation.valuation_engine import ValuationEngine
+
 
 
 class AnalyzerEngine:
@@ -30,6 +32,10 @@ class AnalyzerEngine:
 
     def run(self):
 
+
+        # =========================
+        # Symbol Resolver
+        # =========================
 
         resolver = SymbolResolver()
 
@@ -45,6 +51,10 @@ class AnalyzerEngine:
             )
 
 
+
+        # =========================
+        # Market Data
+        # =========================
 
         api = TSETMCAdapter()
 
@@ -69,23 +79,26 @@ class AnalyzerEngine:
 
 
         company_name = (
-
             api.get_company_name(info)
-
             or
-
             self.symbol
-
         )
 
 
+
+        # =========================
+        # Codal Report
+        # =========================
 
         codal_service = CodalReportService(
             self.symbol
         )
 
 
-        codal_report = codal_service.get_latest_financial_report()
+        codal_report = (
+            codal_service
+            .get_latest_financial_report()
+        )
 
 
         if not codal_report:
@@ -107,6 +120,10 @@ class AnalyzerEngine:
             )
 
 
+
+        # =========================
+        # Sheets
+        # =========================
 
         loader = CodalSheetLoader(
             report_url
@@ -132,6 +149,7 @@ class AnalyzerEngine:
         )
 
 
+
         if not income_sheet:
 
             raise ValueError(
@@ -147,8 +165,14 @@ class AnalyzerEngine:
 
 
 
+        # =========================
+        # Financial Data
+        # =========================
+
         financial = FinancialAdapter(
-            income_sheet.get("url")
+
+            income_sheet["url"]
+
         )
 
 
@@ -156,8 +180,14 @@ class AnalyzerEngine:
 
 
 
+        # =========================
+        # Balance Sheet
+        # =========================
+
         balance_parser = BalanceSheetParser(
-            balance_sheet.get("url")
+
+            balance_sheet["url"]
+
         )
 
 
@@ -183,6 +213,10 @@ class AnalyzerEngine:
         )
 
 
+
+        # =========================
+        # Company Object
+        # =========================
 
         company = Company(
 
@@ -211,23 +245,33 @@ class AnalyzerEngine:
 
 
 
+        # =========================
+        # Company Classification
+        # =========================
+
         company_structure = CompanyClassifier(
 
             {
 
                 "sales": company.sales,
 
-                "operating_profit": company.operating_profit,
+                "operating_profit":
+                    company.operating_profit,
 
-                "net_profit": company.net_profit,
+                "net_profit":
+                    company.net_profit,
 
-                "non_operating_income": company.non_operating_income,
+                "non_operating_income":
+                    company.non_operating_income,
 
-                "assets": company.assets,
+                "assets":
+                    company.assets,
 
-                "equity": company.equity,
+                "equity":
+                    company.equity,
 
-                "liabilities": liabilities
+                "liabilities":
+                    liabilities
 
             },
 
@@ -237,6 +281,10 @@ class AnalyzerEngine:
 
 
 
+        # =========================
+        # Strategy
+        # =========================
+
         analysis_strategy = AnalysisStrategy(
 
             company_structure
@@ -245,41 +293,23 @@ class AnalyzerEngine:
 
 
 
-        months_passed = 9
+        # =========================
+        # Forecast
+        # =========================
+
+        forecast = ForecastEngine(
+
+            company,
+
+            analysis_strategy
+
+        ).run()
 
 
-        forecast_sales = (
 
-            company.sales /
-
-            months_passed
-
-        ) * 12
-
-
-
-        margin = (
-
-            company.net_profit /
-
-            company.sales
-
-            if company.sales
-
-            else 0
-
-        )
-
-
-        forecast_profit = (
-
-            forecast_sales *
-
-            margin
-
-        )
-
-
+        # =========================
+        # Profit Quality
+        # =========================
 
         profit_quality = ProfitQualityAnalyzer(
 
@@ -293,31 +323,33 @@ class AnalyzerEngine:
 
 
 
-        valuation = calculate_valuation(
+        # =========================
+        # Valuation
+        # =========================
 
-            market_cap=company.market_cap,
+        valuation = ValuationEngine(
 
-            forecast_sales=forecast_sales / 10000,
+            company,
 
-            forecast_profit=forecast_profit / 10000,
+            forecast,
 
-            equity=company.equity,
+            analysis_strategy
 
-            assets=company.assets,
-
-            dividend=11570
-
-        )
+        ).run()
 
 
+
+        # =========================
+        # Final Analysis
+        # =========================
 
         final = FinalAnalyzer(
 
             company,
 
-            forecast_sales,
+            forecast["forecast_sales"],
 
-            forecast_profit,
+            forecast["forecast_profit"],
 
             profit_quality,
 
@@ -327,13 +359,17 @@ class AnalyzerEngine:
 
 
 
+        # =========================
+        # Report
+        # =========================
+
         report = ReportGenerator().generate(
 
             company,
 
-            forecast_sales,
+            forecast["forecast_sales"],
 
-            forecast_profit,
+            forecast["forecast_profit"],
 
             profit_quality,
 
@@ -346,11 +382,8 @@ class AnalyzerEngine:
                 "Healthy"
 
                 if balance.get(
-
                     "balanced",
-
                     False
-
                 )
 
                 else
@@ -375,8 +408,16 @@ class AnalyzerEngine:
 
             "report": report,
 
-            "company_structure": company_structure,
+            "company_structure":
+                company_structure,
 
-            "analysis_strategy": analysis_strategy
+            "analysis_strategy":
+                analysis_strategy,
+
+            "forecast":
+                forecast,
+
+            "valuation":
+                valuation
 
         }

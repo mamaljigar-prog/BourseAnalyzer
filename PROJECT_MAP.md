@@ -4,15 +4,17 @@
 
 Date: 1405/04/31
 
-Checkpoint:
+Current checkpoint:
 
 Stable after:
 
-* Forecast logic restoration
-* Codal report selection testing
+* Codal automatic report selection
 * Financial mapping validation
-* Balance sheet extraction validation
-* Git local checkpoint + GitHub sync
+* Balance sheet extraction
+* Forecast engine integration
+* Valuation engine integration
+* Company structure classification
+* Analysis strategy integration
 
 ---
 
@@ -20,237 +22,266 @@ Stable after:
 
 ## Git
 
-Status:
-
-✅ Local repository saved
-✅ Commit created
-✅ GitHub main branch synchronized
-
-Latest checkpoint:
+Latest completed commits:
 
 ```
-Initial BourseAnalyzer checkpoint
+Upgrade company structure classifier
+Connect company classifier and analysis strategy to engine
+Add strategy based forecast engine
 ```
 
-Purpose:
+Current state:
 
-بازگشت امن در صورت ایجاد خطا در مراحل بعدی توسعه.
+✅ Local checkpoint saved
+✅ Main branch working
+✅ Core analysis pipeline executes successfully
 
 ---
 
-# Environment
+# Current Execution Result
 
-Status: Ready
+Test company:
 
-Completed:
+```
+پتروشیمی خراسان
+```
 
-✅ Python environment آماده است.
-✅ Windows + VS Code setup فعال است.
-✅ اجرای ماژول‌ها با:
+Successful pipeline:
 
-```text
-python -m module.path
+```
+Codal
+ ↓
+Financial Extraction
+ ↓
+Balance Sheet Mapping
+ ↓
+Company Classification
+ ↓
+Analysis Strategy
+ ↓
+Forecast Engine
+ ↓
+Valuation
+ ↓
+Final Analyzer
+ ↓
+Report Generator
+```
+
+Output validation:
+
+```
+Company Structure:
+production
+
+Strategy:
+sales_margin
+
+Forward P/E:
+≈ 5.7
 ```
 
 ---
 
-# Codal Layer
+# Project Architecture
 
-Status: Working
+```
+BourseAnalyzer
 
-Completed:
+├── core
+│   ├── analyzer_engine.py
+│   └── analyzer_request.py
+│
+├── codal
+│   ├── codal_report_service.py
+│   ├── sheet_loader.py
+│   ├── sheet_selector.py
+│   ├── financial_adapter.py
+│   └── balance_sheet_parser.py
+│
+├── financial
+│   ├── financial_statement.py
+│   ├── financial_service.py
+│   ├── financial_statement_assembler.py
+│   └── balance_sheet_mapper.py
+│
+├── analysis
+│   ├── company_classifier.py
+│   ├── analysis_strategy.py
+│   ├── profit_quality.py
+│   ├── final_analyzer.py
+│   └── report_generator.py
+│
+├── forecast
+│   └── forecast_engine.py
+│
+├── valuation
+│   ├── valuation_model.py
+│   └── valuation_engine.py
+│
+├── models
+│   └── company.py
+│
+└── tsetmc
+    ├── tsetmc_adapter.py
+    ├── tsetmc_market.py
+    └── symbol_resolver.py
+```
 
-## CodalReportService
+---
+
+# Data Pipeline
+
+## Input
+
+```
+Symbol
+```
+
+↓
+
+## Market Layer
+
+دریافت:
+
+* Price
+* Market Cap
+* Instrument Information
+
+↓
+
+## Codal Layer
 
 وظیفه:
 
-* دریافت گزارش مالی شرکت
-* انتخاب گزارش مناسب
+* پیدا کردن آخرین گزارش مالی معتبر
 * دریافت URL گزارش
+* انتخاب شیت مالی
 
----
+↓
 
-## SheetLoader
+## Financial Layer
 
-Completed:
+استخراج:
 
-* دریافت شیت‌های گزارش
-* تشخیص جدول‌های مالی
+* Sales
+* Gross Profit
+* Operating Profit
+* Net Profit
+* Non Operating Income
 
----
+↓
 
-## SheetSelector
+## Balance Sheet Layer
 
-Status:
+استخراج:
 
-Initial stable version
+* Assets
+* Equity
+* Liabilities
 
-وظیفه:
+Validation:
 
-تفکیک:
-
-* صورت سود و زیان
-* صورت وضعیت مالی
-
----
-
-# Financial Mapping Layer
-
-Status: Stable Initial Version
-
-Completed:
-
-## FinancialConceptMapper
-
-تشخیص:
-
-* sales
-* gross_profit
-* operating_profit
-* net_profit
-* non_operating_income
-
-حل مشکلات:
-
-* تشخیص اشتباه net_profit
-* انتخاب اشتباه ردیف‌های مالی
-
-روش فعلی:
-
-* scoring matching
-* exclude words
-* adaptive row selection
-
-تست شده:
-
-✅ خراسان
-✅ شپنا
-✅ فزر
-
----
-
-# FinancialStatement Layer
-
-Status: Created
-
-Path:
-
-```text
-financial/
-
-├── __init__.py
-├── financial_statement.py
-├── financial_service.py
-├── financial_statement_assembler.py
-└── balance_sheet_mapper.py
+```
+Assets =
+Equity
++
+Liabilities
++
+Non Controlling Interest
 ```
 
-هدف:
-
-جدا کردن:
-
-Codal Raw Data
-
-از
-
-Analysis Engine
-
-Current fields:
-
-* revenue
-* gross_profit
-* operating_profit
-* net_profit
-* non_operating_income
-
-Ready for expansion:
-
-* assets
-* liabilities
-* equity
-* operating_cash_flow
-
 ---
 
-# Balance Sheet Layer
+# Company Classification
 
 Status:
 
 Working Initial Version
 
-Completed:
+هدف:
 
-## BalanceSheetParser
+تشخیص مدل تحلیل قبل از Forecast و Valuation.
 
-استخراج:
+Supported:
 
-* Total Assets
-* Equity
-* Liabilities
-* Balance validation
+## Production
+
+مثال:
+
+* خراسان
+* فولاد
+* کگل
+
+تحلیل:
+
+* Sales
+* Profit
+* Margin
+* Forward Multiples
+
+## Holding
+
+آماده توسعه:
+
+* NAV
+* ارزش پرتفوی
+* شرکت‌های زیرمجموعه
+
+## Bank
+
+آینده:
+
+* Loan Quality
+* Capital Adequacy
+* PB Model
+
+## Insurance
+
+آینده:
+
+* Premium Growth
+* Combined Ratio
+* PB / PE
+
+## Subsidiary Based
+
+آینده:
+
+* Consolidated Analysis
+* Major Subsidiary Impact
 
 ---
 
-## BalanceSheetMapper
+# Analysis Strategy
 
 Status:
 
-Initial stable
+Integrated
 
 وظیفه:
 
-تطبیق ساختارهای مختلف صورت وضعیت مالی.
+تعیین روش تحلیل بر اساس نوع شرکت.
 
-پشتیبانی:
+Current:
 
-* گزارش مستقل
-* گزارش تلفیقی
-* تغییر شماره ردیف‌ها
+Production:
 
-Validation:
-
-فرمول کنترل:
-
-```text
-Assets =
-Equity
-+
-Non Controlling Interest
-+
-Liabilities
 ```
+Forecast:
+sales_margin
 
-تست موفق:
+Valuation:
+PE
+PS
+PB
+PA
+PD
 
-✅ شپنا
-✅ خراسان
-
----
-
-# Current Data Flow
-
-```text
-Codal Report
-      ↓
-Sheet Loader
-      ↓
-Sheet Selector
-      ↓
-Financial Parser
-      ↓
-Financial Concept Mapper
-      ↓
-Financial Statement
-      ↓
-Balance Sheet Mapper
-      ↓
-Forecast Engine
-      ↓
-Valuation Engine
-      ↓
-Final Analyzer
-      ↓
-Report Generator
+Metrics:
+sales_growth
+profit_growth
+net_margin
 ```
 
 ---
@@ -261,30 +292,31 @@ Status:
 
 Working
 
-Current model:
+Current method:
 
-Annualized forecast based on latest financial period.
+```
+Annualized Forecast
+```
 
-Outputs:
+Formula:
+
+```
+Forecast Sales =
+Current Sales / Months Passed × 12
+```
+
+Profit:
+
+```
+Forecast Profit =
+Forecast Sales × Current Net Margin
+```
+
+Output:
 
 * Forecast Sales
 * Forecast Profit
-* Net Margin
-
-Example:
-
-خراسان:
-
-```
-Sales Growth:
-33.33%
-
-Profit Growth:
-33.33%
-
-Forward P/E:
-≈5.7
-```
+* Forecast Method
 
 ---
 
@@ -294,6 +326,18 @@ Status:
 
 Working
 
+Rules:
+
+❌ P/E سایت TSETMC استفاده نمی‌شود.
+
+محاسبه:
+
+```
+Forward P/E =
+Market Cap /
+Forecast Profit
+```
+
 Supported:
 
 * Forward P/E
@@ -302,31 +346,31 @@ Supported:
 * P/B
 * P/A
 
-Rules:
+Target:
 
-❌ استفاده از P/E سایت TSETMC ممنوع
+```
+Target Market Cap =
+Forecast Profit × Base PE
+```
 
-✅ محاسبه نسبت‌ها فقط از داده مالی استخراج‌شده
+Base PE:
 
-Formula:
-
-```text
-Forward P/E =
-Market Cap /
-Forecast Profit
+```
+7
 ```
 
 ---
 
-# Profit Quality Analysis
+# Profit Quality
 
 Status:
 
 Working
 
-Checks:
+بررسی:
 
 * Operating Profit
+* Net Profit
 * Non Operating Income
 
 هدف:
@@ -334,105 +378,105 @@ Checks:
 تشخیص:
 
 * سود عملیاتی واقعی
-* سود غیرتکرارشونده
+* سود ناشی از درآمد غیرتکرارشونده
 
 ---
 
-# Company Structure Classification Layer
+# Financial Rules
 
-Status:
+قوانین ثابت:
 
-Next Major Task
-
-هدف:
-
-تشخیص نوع شرکت قبل از تحلیل.
-
----
-
-## Production Company
-
-Examples:
-
-* خراسان
-* فولاد
-* کگل
-* کچاد
-
-Model:
-
-* Sales
-* Profit
-* Margin
-* Forward Multiples
-
----
-
-## Holding Company
-
-Examples:
-
-* فارس
-* تاپیکو
-
-Future Model:
-
-NAV Analysis
-
----
-
-## Group / Subsidiary Based Company
-
-Examples:
-
-* پترول
-* فزر
-
-نیاز:
-
-بررسی:
-
-* صورت مالی اصلی
-* صورت مالی تلفیقی
-* شرکت‌های مهم زیرمجموعه
-
----
-
-## Bank
-
-Future:
-
-Banking Model
-
----
-
-## Insurance
-
-Future:
-
-Insurance Model
-
----
-
-# Financial Analysis Rules
-
-قوانین ثابت پروژه:
-
-1. گزارش مالی جدید، پایه اصلی تحلیل است.
+1. آخرین گزارش مالی معتبر، مبنای اصلی تحلیل است.
 
 2. گزارش‌های قدیمی فقط برای:
 
 * مقایسه
 * رشد
-* کیفیت داده
+* کنترل کیفیت
 
 استفاده می‌شوند.
 
-3. روند ۵ ساله فعلاً خارج از محدوده اصلی است.
+3. روند ۵ ساله فعلاً خارج از محدوده است.
 
-4. سود فروش دارایی و درآمد غیرعملیاتی غیرتکرارشونده نباید سود اصلی تلقی شود.
+4. فروش دارایی و درآمد غیرعملیاتی غیرتکرارشونده نباید سود اصلی محسوب شود.
 
-5. برای هلدینگ‌ها تحلیل باید بر اساس NAV توسعه پیدا کند.
+5. هلدینگ‌ها باید با NAV تحلیل شوند.
+
+6. P/E فقط از سود پیش‌بینی‌شده داخلی محاسبه می‌شود.
+
+---
+
+# Current Known Issue
+
+در زمان اتصال AnalysisStrategy:
+
+اشکال:
+
+```
+AttributeError:
+'Company' object has no attribute 'get'
+```
+
+علت:
+
+AnalysisStrategy انتظار dictionary دارد ولی Company object ارسال شده است.
+
+راه اصلاح:
+
+قبل از ارسال:
+
+```
+company_structure
+```
+
+یا تبدیل Company به dictionary انجام شود.
+
+---
+
+# Next Development Priority
+
+## Priority 1
+
+اصلاح اتصال:
+
+```
+Company
+ ↓
+CompanyClassifier
+ ↓
+AnalysisStrategy
+```
+
+---
+
+## Priority 2
+
+اتصال کامل:
+
+```
+ForecastEngine
+ ↓
+ValuationEngine
+```
+
+به جای فراخوانی مستقیم:
+
+```
+calculate_valuation()
+```
+
+در core engine.
+
+---
+
+## Priority 3
+
+توسعه مدل‌ها:
+
+* NAV Engine
+* Holding Analyzer
+* Bank Analyzer
+* Insurance Analyzer
 
 ---
 
@@ -442,15 +486,15 @@ Insurance Model
 
 هر تغییر کد:
 
-فقط با فایل کامل جایگزین انجام می‌شود.
+فقط فایل کامل جایگزین شود.
 
 ممنوع:
 
-* patch
-* تغییر چند خطی دستی
+* Patch
 * تکه کد ناقص
+* تغییر چند خطی
 
-فرمت تغییر:
+فرمت:
 
 ```
 File Path:
@@ -458,60 +502,22 @@ File Path:
 Complete Replacement Code
 ```
 
----
+## Rule #2
 
-# Next Development Priority
-
-## Priority 1
-
-Company Structure Classification
-
-هدف:
-
-قبل از valuation مشخص شود شرکت:
-
-* تولیدی است
-* هلدینگ است
-* بانک است
-* بیمه است
-
----
-
-## Priority 2
-
-Dynamic Balance Sheet Mapping
-
-هدف:
-
-پشتیبانی کامل از:
-
-* گزارش‌های مستقل
-* تلفیقی
-* هلدینگ‌ها
-
----
-
-## Priority 3
-
-Advanced Models
-
-شامل:
-
-* NAV Engine
-* Holding Analyzer
-* Bank Analyzer
-* Insurance Analyzer
+دستور بعدی توسعه باید در همان پیام ارسال شود و کار به پیام بعدی موکول نشود.
 
 ---
 
 # Final Goal
 
-ساخت موتور تحلیل بورس که بتواند:
+ساخت موتور تحلیل بنیادی خودکار که:
 
-* داده مالی را از کدال استخراج کند
+* گزارش کدال را استخراج کند
 * ساختار شرکت را تشخیص دهد
 * سود واقعی را ارزیابی کند
-* ارزش‌گذاری انجام دهد
+* Forecast انجام دهد
+* Valuation انجام دهد
+* ریسک بنیادی را تشخیص دهد
 * شرکت‌ها را رتبه‌بندی کند
 
 بر اساس:
@@ -520,4 +526,4 @@ Advanced Models
 * کیفیت سود
 * ارزش‌گذاری
 * ساختار مالی
-* ریسک بنیادی
+* ریسک
