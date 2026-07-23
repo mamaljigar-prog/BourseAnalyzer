@@ -15,6 +15,9 @@ from valuation.valuation_model import calculate_valuation
 from analysis.profit_quality import ProfitQualityAnalyzer
 from analysis.final_analyzer import FinalAnalyzer
 from analysis.report_generator import ReportGenerator
+from analysis.company_classifier import CompanyClassifier
+from analysis.analysis_strategy import AnalysisStrategy
+
 
 
 class AnalyzerEngine:
@@ -65,10 +68,6 @@ class AnalyzerEngine:
     def run(self):
 
 
-        # -------------------------
-        # Market
-        # -------------------------
-
         api = TSETMCAdapter()
 
 
@@ -92,10 +91,6 @@ class AnalyzerEngine:
 
 
 
-        # -------------------------
-        # Financial
-        # -------------------------
-
         income_url = self.build_sheet_url(
             self.codal_url,
             1
@@ -111,10 +106,6 @@ class AnalyzerEngine:
 
 
 
-        # -------------------------
-        # Balance Sheet
-        # -------------------------
-
         balance_url = self.build_sheet_url(
             self.codal_url,
             0
@@ -129,6 +120,7 @@ class AnalyzerEngine:
         balance_sheet = SheetSelector(
             sheets
         ).report()["balance_sheet"]
+
 
 
         balance_parser = BalanceSheetParser(
@@ -155,25 +147,26 @@ class AnalyzerEngine:
 
 
         balance["balanced"] = (
+
             balance["assets"]
             ==
             balance["liabilities"]
             +
             balance["equity"]
+            +
+            balance.get(
+                "non_controlling_interest",
+                0
+            )
+
         )
 
 
         assets = balance["assets"]
-
         equity = balance["equity"]
-
         liabilities = balance["liabilities"]
 
 
-
-        # -------------------------
-        # Company
-        # -------------------------
 
         company = Company(
 
@@ -202,9 +195,39 @@ class AnalyzerEngine:
 
 
 
-        # -------------------------
-        # Forecast
-        # -------------------------
+        company_structure = CompanyClassifier(
+
+            {
+
+                "sales": company.sales,
+
+                "operating_profit": company.operating_profit,
+
+                "net_profit": company.net_profit,
+
+                "non_operating_income": company.non_operating_income,
+
+                "assets": company.assets,
+
+                "equity": company.equity,
+
+                "liabilities": liabilities
+
+            },
+
+            company.name
+
+        ).classify()
+
+
+
+        analysis_strategy = AnalysisStrategy(
+
+            company_structure
+
+        ).get_strategy()
+
+
 
         months_passed = 9
 
@@ -238,10 +261,6 @@ class AnalyzerEngine:
         )
 
 
-
-        # -------------------------
-        # Analysis
-        # -------------------------
 
         profit_quality = ProfitQualityAnalyzer(
 
@@ -308,9 +327,14 @@ class AnalyzerEngine:
                 if balance["balanced"]
                 else
                 "Warning"
-            )
+            ),
+
+            company_structure=company_structure,
+
+            analysis_strategy=analysis_strategy
 
         )
+
 
 
         return {
@@ -319,6 +343,10 @@ class AnalyzerEngine:
 
             "analysis": final,
 
-            "report": report
+            "report": report,
+
+            "company_structure": company_structure,
+
+            "analysis_strategy": analysis_strategy
 
         }

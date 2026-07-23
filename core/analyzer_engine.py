@@ -15,7 +15,8 @@ from valuation.valuation_model import calculate_valuation
 from analysis.profit_quality import ProfitQualityAnalyzer
 from analysis.final_analyzer import FinalAnalyzer
 from analysis.report_generator import ReportGenerator
-
+from analysis.company_classifier import CompanyClassifier
+from analysis.analysis_strategy import AnalysisStrategy
 
 
 class AnalyzerEngine:
@@ -29,10 +30,6 @@ class AnalyzerEngine:
 
     def run(self):
 
-
-        # =========================
-        # Symbol Resolver
-        # =========================
 
         resolver = SymbolResolver()
 
@@ -48,10 +45,6 @@ class AnalyzerEngine:
             )
 
 
-
-        # =========================
-        # Market Data
-        # =========================
 
         api = TSETMCAdapter()
 
@@ -87,10 +80,6 @@ class AnalyzerEngine:
 
 
 
-        # =========================
-        # Codal Report
-        # =========================
-
         codal_service = CodalReportService(
             self.symbol
         )
@@ -119,10 +108,6 @@ class AnalyzerEngine:
 
 
 
-        # =========================
-        # Load Sheets
-        # =========================
-
         loader = CodalSheetLoader(
             report_url
         )
@@ -131,13 +116,9 @@ class AnalyzerEngine:
         sheets = loader.get_sheet_options()
 
 
-
-        selector = SheetSelector(
+        selected = SheetSelector(
             sheets
-        )
-
-
-        selected = selector.report()
+        ).report()
 
 
 
@@ -149,7 +130,6 @@ class AnalyzerEngine:
         balance_sheet = selected.get(
             "balance_sheet"
         )
-
 
 
         if not income_sheet:
@@ -167,23 +147,8 @@ class AnalyzerEngine:
 
 
 
-        income_url = income_sheet.get(
-            "url"
-        )
-
-
-        balance_url = balance_sheet.get(
-            "url"
-        )
-
-
-
-        # =========================
-        # Financial Data
-        # =========================
-
         financial = FinancialAdapter(
-            income_url
+            income_sheet.get("url")
         )
 
 
@@ -191,12 +156,8 @@ class AnalyzerEngine:
 
 
 
-        # =========================
-        # Balance Sheet
-        # =========================
-
         balance_parser = BalanceSheetParser(
-            balance_url
+            balance_sheet.get("url")
         )
 
 
@@ -222,10 +183,6 @@ class AnalyzerEngine:
         )
 
 
-
-        # =========================
-        # Company
-        # =========================
 
         company = Company(
 
@@ -254,9 +211,39 @@ class AnalyzerEngine:
 
 
 
-        # =========================
-        # Forecast
-        # =========================
+        company_structure = CompanyClassifier(
+
+            {
+
+                "sales": company.sales,
+
+                "operating_profit": company.operating_profit,
+
+                "net_profit": company.net_profit,
+
+                "non_operating_income": company.non_operating_income,
+
+                "assets": company.assets,
+
+                "equity": company.equity,
+
+                "liabilities": liabilities
+
+            },
+
+            company.name
+
+        ).classify()
+
+
+
+        analysis_strategy = AnalysisStrategy(
+
+            company_structure
+
+        ).get_strategy()
+
+
 
         months_passed = 9
 
@@ -293,10 +280,6 @@ class AnalyzerEngine:
         )
 
 
-
-        # =========================
-        # Analysis
-        # =========================
 
         profit_quality = ProfitQualityAnalyzer(
 
@@ -374,9 +357,14 @@ class AnalyzerEngine:
 
                 "Warning"
 
-            )
+            ),
+
+            company_structure=company_structure,
+
+            analysis_strategy=analysis_strategy
 
         )
+
 
 
         return {
@@ -385,6 +373,10 @@ class AnalyzerEngine:
 
             "analysis": final,
 
-            "report": report
+            "report": report,
+
+            "company_structure": company_structure,
+
+            "analysis_strategy": analysis_strategy
 
         }

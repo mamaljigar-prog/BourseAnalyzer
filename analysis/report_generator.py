@@ -10,6 +10,8 @@ class ReportGenerator:
         valuation,
         liabilities,
         balance_status,
+        company_structure=None,
+        analysis_strategy=None,
         report_period=None,
         industry_rank=None
     ):
@@ -60,6 +62,54 @@ class ReportGenerator:
         )
 
 
+
+        structure_section = ""
+
+
+        if company_structure:
+
+            structure_section = f"""
+
+COMPANY STRUCTURE
+------------------------------
+Type:
+{company_structure.get("type")}
+
+Confidence:
+{company_structure.get("confidence")}
+
+Reason:
+{company_structure.get("reason")}
+
+"""
+
+
+
+        strategy_section = ""
+
+
+        if analysis_strategy:
+
+            strategy_section = f"""
+
+ANALYSIS STRATEGY
+------------------------------
+Type:
+{analysis_strategy.get("type")}
+
+Forecast Method:
+{analysis_strategy.get("forecast")}
+
+Valuation Methods:
+{analysis_strategy.get("valuation")}
+
+Metrics:
+{analysis_strategy.get("metrics")}
+
+"""
+
+
+
         industry_section = ""
 
 
@@ -76,6 +126,7 @@ Market Cap Rank:
 {industry_rank}
 
 """
+
 
 
         period_section = ""
@@ -109,9 +160,14 @@ Symbol:
 {company.symbol}
 
 
+{structure_section}
+
+{strategy_section}
+
 {industry_section}
 
 {period_section}
+
 
 PERFORMANCE
 ------------------------------
@@ -123,6 +179,7 @@ Forecast Sales:
 
 Sales Growth:
 {round(sales_growth,2)} %
+
 
 
 PROFITABILITY
@@ -140,6 +197,7 @@ Net Margin:
 {round((company.net_profit/company.sales)*100,2) if company.sales else 0} %
 
 
+
 PROFIT QUALITY
 ------------------------------
 Operating Profit Coverage:
@@ -150,6 +208,7 @@ Non Operating Income Ratio:
 
 Quality Status:
 {profit_quality["status"]}
+
 
 
 BALANCE SHEET
@@ -168,6 +227,7 @@ Balance Status:
 
 Debt / Equity:
 {round(debt_equity,2)}
+
 
 
 VALUATION
@@ -189,6 +249,7 @@ P/A:
 
 P/D Forward:
 {valuation["PD"]}
+
 
 
 ANALYST SUMMARY
