@@ -1,3 +1,9 @@
+# main.py
+
+# -*- coding: utf-8 -*-
+
+import sys
+
 from core.analyzer_engine import AnalyzerEngine
 from core.analyzer_request import AnalyzerRequest
 
@@ -5,23 +11,25 @@ from core.analyzer_request import AnalyzerRequest
 
 def main():
 
-
     print("==============================")
     print("Bourse Analyzer")
     print("==============================")
 
 
+    symbol = (
+        sys.argv[1]
+        if len(sys.argv) > 1
+        else "خراسان"
+    )
+
+
     request = AnalyzerRequest(
-
-        symbol="خراسان"
-
+        symbol=symbol
     )
 
 
     engine = AnalyzerEngine(
-
         request.symbol
-
     )
 
 
@@ -29,9 +37,7 @@ def main():
 
 
     print(
-
         result["report"]
-
     )
 
 
