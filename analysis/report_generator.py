@@ -17,6 +17,13 @@ class ReportGenerator:
     ):
 
 
+        def rial_to_toman_billion(value):
+            if value is None:
+                return 0
+
+            return round(value / 10000, 2)
+
+
         sales_growth = (
 
             (
@@ -62,7 +69,6 @@ class ReportGenerator:
         )
 
 
-
         structure_section = ""
 
 
@@ -82,7 +88,6 @@ Reason:
 {company_structure.get("reason")}
 
 """
-
 
 
         strategy_section = ""
@@ -109,7 +114,6 @@ Metrics:
 """
 
 
-
         industry_section = ""
 
 
@@ -128,7 +132,6 @@ Market Cap Rank:
 """
 
 
-
         period_section = ""
 
 
@@ -145,7 +148,6 @@ Forecast Method:
 {report_period.get("forecast_method")}
 
 """
-
 
 
         return f"""
@@ -172,10 +174,10 @@ Symbol:
 PERFORMANCE
 ------------------------------
 Current Sales:
-{company.sales}
+{rial_to_toman_billion(company.sales)} Billion Toman
 
 Forecast Sales:
-{round(forecast_sales)}
+{rial_to_toman_billion(forecast_sales)} Billion Toman
 
 Sales Growth:
 {round(sales_growth,2)} %
@@ -185,10 +187,10 @@ Sales Growth:
 PROFITABILITY
 ------------------------------
 Current Profit:
-{company.net_profit}
+{rial_to_toman_billion(company.net_profit)} Billion Toman
 
 Forecast Profit:
-{round(forecast_profit)}
+{rial_to_toman_billion(forecast_profit)} Billion Toman
 
 Profit Growth:
 {round(profit_growth,2)} %
@@ -214,13 +216,13 @@ Quality Status:
 BALANCE SHEET
 ------------------------------
 Assets:
-{company.assets}
+{rial_to_toman_billion(company.assets)} Billion Toman
 
 Equity:
-{company.equity}
+{rial_to_toman_billion(company.equity)} Billion Toman
 
 Liabilities:
-{liabilities}
+{rial_to_toman_billion(liabilities)} Billion Toman
 
 Balance Status:
 {balance_status}
