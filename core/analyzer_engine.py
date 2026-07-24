@@ -24,14 +24,10 @@ from valuation.valuation_engine import ValuationEngine
 class AnalyzerEngine:
 
     def __init__(self, symbol):
-
         self.symbol = symbol
 
-    def run(self):
 
-        # =========================================================
-        # Symbol Resolver
-        # =========================================================
+    def run(self):
 
         resolver = SymbolResolver()
 
@@ -40,14 +36,14 @@ class AnalyzerEngine:
         )
 
         if not ins_code:
-
             raise ValueError(
                 "Symbol not found"
             )
 
-        # =========================================================
+
+        # =========================
         # Market Data
-        # =========================================================
+        # =========================
 
         api = TSETMCAdapter()
 
@@ -68,13 +64,13 @@ class AnalyzerEngine:
 
         company_name = (
             api.get_company_name(info)
-            or
-            self.symbol
+            or self.symbol
         )
 
-        # =========================================================
-        # Codal Report
-        # =========================================================
+
+        # =========================
+        # Codal
+        # =========================
 
         codal_service = CodalReportService(
             self.symbol
@@ -86,65 +82,51 @@ class AnalyzerEngine:
         )
 
         if not codal_report:
-
             raise ValueError(
                 "No financial report selected"
             )
+
 
         report_url = codal_report.get(
             "url"
         )
 
         if not report_url:
-
             raise ValueError(
                 "Report URL not found"
             )
 
-        # =========================================================
-        # Report Period Detection
-        # =========================================================
 
-        report_title = codal_report.get(
-            "title",
-            ""
-        )
+        period_info = ReportPeriodDetector(
+            codal_report.get(
+                "title",
+                ""
+            )
+        ).detect()
 
-        period_detector = ReportPeriodDetector(
-            report_title
-        )
-
-        period_info = (
-            period_detector.detect()
-        )
 
         period_months = period_info.get(
-            "months"
+            "months",
+            12
         )
 
-        # اگر ReportPeriodDetector نتوانست دوره را تشخیص دهد،
-        # FinancialAdapter بعداً دوره را از ستون‌های صورت سود و زیان
-        # تشخیص خواهد داد.
-        #
-        # این مقدار فقط fallback موقت است.
-
-        if not period_months or period_months <= 0:
-
+        if not period_months:
             period_months = 12
 
-        # =========================================================
+
+        # =========================
         # Sheets
-        # =========================================================
+        # =========================
 
-        loader = CodalSheetLoader(
+        sheets = CodalSheetLoader(
             report_url
-        )
+        ).get_sheet_options()
 
-        sheets = loader.get_sheet_options()
 
         selected = SheetSelector(
             sheets
         ).report()
+
 
         income_sheet = selected.get(
             "income_statement"
@@ -154,273 +136,112 @@ class AnalyzerEngine:
             "balance_sheet"
         )
 
+
         if not income_sheet:
-
             raise ValueError(
-                "Income statement sheet not found"
+                "Income statement not found"
             )
 
-        if not balance_sheet:
 
-            raise ValueError(
-                "Balance sheet sheet not found"
-            )
-
-        # =========================================================
-        # Financial Data
-        #
-        # FinancialAdapter is the boundary between the raw
-        # Codal parser and the analysis engine.
-        #
-        # CodalProfitLossParser
-        #       ↓
-        # data["semantic"]
-        #
-        # FinancialAdapter
-        #       ↓
-        # data["current"]
-        # data["previous"]
-        # data["annual"]
-        #
-        # AnalyzerEngine must consume the normalized structure.
-        # =========================================================
+        # =========================
+        # Financial Adapter
+        # =========================
 
         financial = FinancialAdapter(
             income_sheet["url"],
             period_months=period_months
         )
 
+
         data = financial.report()
 
-        # =========================================================
-        # Normalized Financial Data
-        # =========================================================
 
-        current_data = data.get(
+        current = data.get(
             "current",
             {}
         )
 
-        previous_data = data.get(
+        previous = data.get(
             "previous",
             {}
         )
 
-        annual_data = data.get(
+        annual = data.get(
             "annual",
             {}
         )
 
-        # =========================================================
-        # Current Financial Values
-        # =========================================================
 
-        sales = current_data.get(
-            "sales",
-            0
-        )
-
-        gross_profit = current_data.get(
-            "gross_profit",
-            0
-        )
-
-        operating_profit = current_data.get(
-            "operating_profit",
-            0
-        )
-
-        non_operating_income = current_data.get(
-            "non_operating_income",
-            0
-        )
-
-        net_profit = current_data.get(
-            "net_profit",
-            0
-        )
-
-        # =========================================================
-        # Previous Comparable Values
-        #
-        # These values are preserved for growth analysis,
-        # comparison and financial quality checks.
-        # =========================================================
-
-        previous_sales = previous_data.get(
-            "sales",
-            0
-        )
-
-        previous_gross_profit = previous_data.get(
-            "gross_profit",
-            0
-        )
-
-        previous_operating_profit = previous_data.get(
-            "operating_profit",
-            0
-        )
-
-        previous_non_operating_income = previous_data.get(
-            "non_operating_income",
-            0
-        )
-
-        previous_net_profit = previous_data.get(
-            "net_profit",
-            0
-        )
-
-        # =========================================================
-        # Annual Previous Full Year Values
-        #
-        # These values are not used as the primary current
-        # analysis period.
-        #
-        # They are preserved for future historical comparison,
-        # growth analysis and quality checks.
-        # =========================================================
-
-        annual_sales = annual_data.get(
-            "sales",
-            0
-        )
-
-        annual_gross_profit = annual_data.get(
-            "gross_profit",
-            0
-        )
-
-        annual_operating_profit = annual_data.get(
-            "operating_profit",
-            0
-        )
-
-        annual_non_operating_income = annual_data.get(
-            "non_operating_income",
-            0
-        )
-
-        annual_net_profit = annual_data.get(
-            "net_profit",
-            0
-        )
-
-        # =========================================================
-        # Use FinancialAdapter Period
-        #
-        # FinancialAdapter has direct access to the financial
-        # statement columns and can detect the actual cumulative
-        # reporting period.
-        #
-        # Therefore, when available, its detected period takes
-        # priority over the report-title detector.
-        # =========================================================
-
-        adapter_period_months = data.get(
+        adapter_period = data.get(
             "period_months"
         )
 
-        if (
-            adapter_period_months
-            and
-            adapter_period_months > 0
-        ):
+        if adapter_period:
+            period_months = adapter_period
 
-            period_months = (
-                adapter_period_months
+
+
+        sales = current.get(
+            "sales",
+            0
+        )
+
+        operating_profit = current.get(
+            "operating_profit",
+            0
+        )
+
+        net_profit = current.get(
+            "net_profit",
+            0
+        )
+
+        non_operating_income = current.get(
+            "non_operating_income",
+            0
+        )
+
+
+        previous_sales = previous.get(
+            "sales",
+            0
+        )
+
+
+        # =========================
+        # Balance Sheet
+        # =========================
+
+        assets = 0
+        equity = 0
+        liabilities = 0
+
+        if balance_sheet:
+
+            balance = BalanceSheetParser(
+                balance_sheet["url"]
+            ).get_balance_data()
+
+
+            assets = balance.get(
+                "assets",
+                0
             )
 
-        # =========================================================
-        # Debug Financial Values
-        # =========================================================
+            equity = balance.get(
+                "equity",
+                0
+            )
 
-        print()
+            liabilities = balance.get(
+                "liabilities",
+                0
+            )
 
-        print(
-            "DEBUG ENGINE FINANCIAL VALUES"
-        )
 
-        print(
-            "------------------------------"
-        )
-
-        print(
-            "Period Months:",
-            period_months
-        )
-
-        print(
-            "Current Sales:",
-            sales
-        )
-
-        print(
-            "Previous Comparable Sales:",
-            previous_sales
-        )
-
-        print(
-            "Annual Previous Sales:",
-            annual_sales
-        )
-
-        print(
-            "Current Gross Profit:",
-            gross_profit
-        )
-
-        print(
-            "Current Operating Profit:",
-            operating_profit
-        )
-
-        print(
-            "Current Non Operating Income:",
-            non_operating_income
-        )
-
-        print(
-            "Current Net Profit:",
-            net_profit
-        )
-
-        print(
-            "------------------------------"
-        )
-
-        # =========================================================
-        # Balance Sheet
-        # =========================================================
-
-        balance_parser = BalanceSheetParser(
-            balance_sheet["url"]
-        )
-
-        balance = (
-            balance_parser
-            .get_balance_data()
-        )
-
-        assets = balance.get(
-            "assets",
-            0
-        )
-
-        equity = balance.get(
-            "equity",
-            0
-        )
-
-        liabilities = balance.get(
-            "liabilities",
-            0
-        )
-
-        # =========================================================
-        # Company Object
-        # =========================================================
+        # =========================
+        # Company
+        # =========================
 
         company = Company(
 
@@ -438,26 +259,91 @@ class AnalyzerEngine:
 
             equity=equity,
 
-            market_cap=live[
-                "market_cap"
-            ],
+            market_cap=live.get(
+                "market_cap",
+                0
+            ),
 
-            non_operating_income=(
-                non_operating_income
-            )
+            non_operating_income=
+                non_operating_income,
+
+            period_months=
+                period_months,
+
+
+            previous_sales=
+                previous.get(
+                    "sales",
+                    0
+                ),
+
+            previous_gross_profit=
+                previous.get(
+                    "gross_profit",
+                    0
+                ),
+
+            previous_operating_profit=
+                previous.get(
+                    "operating_profit",
+                    0
+                ),
+
+            previous_net_profit=
+                previous.get(
+                    "net_profit",
+                    0
+                ),
+
+            previous_non_operating_income=
+                previous.get(
+                    "non_operating_income",
+                    0
+                ),
+
+
+            annual_previous_sales=
+                annual.get(
+                    "sales",
+                    0
+                ),
+
+            annual_previous_gross_profit=
+                annual.get(
+                    "gross_profit",
+                    0
+                ),
+
+            annual_previous_operating_profit=
+                annual.get(
+                    "operating_profit",
+                    0
+                ),
+
+            annual_previous_net_profit=
+                annual.get(
+                    "net_profit",
+                    0
+                ),
+
+            annual_previous_non_operating_income=
+                annual.get(
+                    "non_operating_income",
+                    0
+                )
 
         )
 
-        # =========================================================
-        # Company Classification
-        # =========================================================
 
-        company_structure = CompanyClassifier(
+        # =========================
+        # Classification
+        # =========================
+
+        structure = CompanyClassifier(
 
             {
 
-                "sales":
-                    company.sales,
+                "sales": company.sales,
 
                 "operating_profit":
                     company.operating_profit,
@@ -483,35 +369,35 @@ class AnalyzerEngine:
 
         ).classify()
 
-        # =========================================================
-        # Strategy
-        # =========================================================
 
-        analysis_strategy = AnalysisStrategy(
 
-            company_structure
-
+        strategy = AnalysisStrategy(
+            structure
         ).get_strategy()
 
-        # =========================================================
+
+
+        # =========================
         # Forecast
-        # =========================================================
+        # =========================
 
         forecast = ForecastEngine(
 
             company,
 
-            analysis_strategy,
+            strategy,
 
-            period_months=period_months
+            period_months
 
         ).run()
 
-        # =========================================================
-        # Profit Quality
-        # =========================================================
 
-        profit_quality = ProfitQualityAnalyzer(
+
+        # =========================
+        # Quality
+        # =========================
+
+        quality = ProfitQualityAnalyzer(
 
             company.operating_profit,
 
@@ -521,9 +407,11 @@ class AnalyzerEngine:
 
         ).analyze()
 
-        # =========================================================
+
+
+        # =========================
         # Valuation
-        # =========================================================
+        # =========================
 
         valuation = ValuationEngine(
 
@@ -531,178 +419,77 @@ class AnalyzerEngine:
 
             forecast,
 
-            analysis_strategy
+            strategy
 
         ).run()
 
-        # =========================================================
-        # Final Analysis
-        # =========================================================
+
+
+        # =========================
+        # Final
+        # =========================
 
         final = FinalAnalyzer(
 
             company,
 
-            forecast[
-                "forecast_sales"
-            ],
+            forecast["forecast_sales"],
 
-            forecast[
-                "forecast_profit"
-            ],
+            forecast["forecast_profit"],
 
-            profit_quality,
+            quality,
 
             valuation
 
         ).generate()
 
-        # =========================================================
-        # Report
-        # =========================================================
+
 
         report = ReportGenerator().generate(
 
             company,
 
-            forecast[
-                "forecast_sales"
-            ],
+            forecast["forecast_sales"],
 
-            forecast[
-                "forecast_profit"
-            ],
+            forecast["forecast_profit"],
 
-            profit_quality,
+            quality,
 
             valuation,
 
             liabilities,
 
             (
-
                 "Healthy"
-
-                if balance.get(
-                    "balanced",
-                    False
-                )
-
-                else
-
-                "Warning"
-
+                if assets + liabilities - equity == assets
+                else "Warning"
             ),
 
-            company_structure=(
-                company_structure
-            ),
+            company_structure=structure,
 
-            analysis_strategy=(
-                analysis_strategy
-            )
+            analysis_strategy=strategy
 
         )
 
-        # =========================================================
-        # Return Result
-        # =========================================================
 
         return {
 
-            "company":
-                company,
+            "company": company,
 
-            "analysis":
-                final,
+            "analysis": final,
 
-            "report":
-                report,
+            "report": report,
 
-            "company_structure":
-                company_structure,
+            "company_structure": structure,
 
-            "analysis_strategy":
-                analysis_strategy,
+            "analysis_strategy": strategy,
 
-            "forecast":
-                forecast,
+            "forecast": forecast,
 
-            "valuation":
-                valuation,
+            "valuation": valuation,
 
-            "period_info":
-                period_info,
+            "period_info": period_info,
 
-            "period_months":
-                period_months,
-
-            # =====================================================
-            # Historical Financial Data
-            #
-            # These values are returned for future growth,
-            # comparison and quality analysis.
-            # =====================================================
-
-            "financial_data": {
-
-                "current": {
-
-                    "sales":
-                        sales,
-
-                    "gross_profit":
-                        gross_profit,
-
-                    "operating_profit":
-                        operating_profit,
-
-                    "non_operating_income":
-                        non_operating_income,
-
-                    "net_profit":
-                        net_profit
-
-                },
-
-                "previous_comparable": {
-
-                    "sales":
-                        previous_sales,
-
-                    "gross_profit":
-                        previous_gross_profit,
-
-                    "operating_profit":
-                        previous_operating_profit,
-
-                    "non_operating_income":
-                        previous_non_operating_income,
-
-                    "net_profit":
-                        previous_net_profit
-
-                },
-
-                "annual_previous": {
-
-                    "sales":
-                        annual_sales,
-
-                    "gross_profit":
-                        annual_gross_profit,
-
-                    "operating_profit":
-                        annual_operating_profit,
-
-                    "non_operating_income":
-                        annual_non_operating_income,
-
-                    "net_profit":
-                        annual_net_profit
-
-                }
-
-            }
+            "period_months": period_months
 
         }
