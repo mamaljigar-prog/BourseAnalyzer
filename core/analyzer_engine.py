@@ -69,7 +69,7 @@ class AnalyzerEngine:
 
 
         # =========================
-        # Codal
+        # Codal Report
         # =========================
 
         codal_service = CodalReportService(
@@ -110,8 +110,10 @@ class AnalyzerEngine:
             12
         )
 
+
         if not period_months:
             period_months = 12
+
 
 
         # =========================
@@ -141,6 +143,7 @@ class AnalyzerEngine:
             raise ValueError(
                 "Income statement not found"
             )
+
 
 
         # =========================
@@ -176,6 +179,7 @@ class AnalyzerEngine:
             "period_months"
         )
 
+
         if adapter_period:
             period_months = adapter_period
 
@@ -202,11 +206,6 @@ class AnalyzerEngine:
         )
 
 
-        previous_sales = previous.get(
-            "sales",
-            0
-        )
-
 
         # =========================
         # Balance Sheet
@@ -215,6 +214,7 @@ class AnalyzerEngine:
         assets = 0
         equity = 0
         liabilities = 0
+
 
         if balance_sheet:
 
@@ -237,6 +237,7 @@ class AnalyzerEngine:
                 "liabilities",
                 0
             )
+
 
 
         # =========================
@@ -264,75 +265,64 @@ class AnalyzerEngine:
                 0
             ),
 
-            non_operating_income=
-                non_operating_income,
+            non_operating_income=non_operating_income,
 
-            period_months=
-                period_months,
+            period_months=period_months,
 
 
-            previous_sales=
-                previous.get(
-                    "sales",
-                    0
-                ),
+            previous_sales=previous.get(
+                "sales",
+                0
+            ),
 
-            previous_gross_profit=
-                previous.get(
-                    "gross_profit",
-                    0
-                ),
+            previous_gross_profit=previous.get(
+                "gross_profit",
+                0
+            ),
 
-            previous_operating_profit=
-                previous.get(
-                    "operating_profit",
-                    0
-                ),
+            previous_operating_profit=previous.get(
+                "operating_profit",
+                0
+            ),
 
-            previous_net_profit=
-                previous.get(
-                    "net_profit",
-                    0
-                ),
+            previous_net_profit=previous.get(
+                "net_profit",
+                0
+            ),
 
-            previous_non_operating_income=
-                previous.get(
-                    "non_operating_income",
-                    0
-                ),
+            previous_non_operating_income=previous.get(
+                "non_operating_income",
+                0
+            ),
 
 
-            annual_previous_sales=
-                annual.get(
-                    "sales",
-                    0
-                ),
+            annual_previous_sales=annual.get(
+                "sales",
+                0
+            ),
 
-            annual_previous_gross_profit=
-                annual.get(
-                    "gross_profit",
-                    0
-                ),
+            annual_previous_gross_profit=annual.get(
+                "gross_profit",
+                0
+            ),
 
-            annual_previous_operating_profit=
-                annual.get(
-                    "operating_profit",
-                    0
-                ),
+            annual_previous_operating_profit=annual.get(
+                "operating_profit",
+                0
+            ),
 
-            annual_previous_net_profit=
-                annual.get(
-                    "net_profit",
-                    0
-                ),
+            annual_previous_net_profit=annual.get(
+                "net_profit",
+                0
+            ),
 
-            annual_previous_non_operating_income=
-                annual.get(
-                    "non_operating_income",
-                    0
-                )
+            annual_previous_non_operating_income=annual.get(
+                "non_operating_income",
+                0
+            )
 
         )
+
 
 
         # =========================
@@ -394,7 +384,7 @@ class AnalyzerEngine:
 
 
         # =========================
-        # Quality
+        # Profit Quality
         # =========================
 
         quality = ProfitQualityAnalyzer(

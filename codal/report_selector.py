@@ -4,7 +4,6 @@ import re
 
 class ReportSelector:
 
-
     def __init__(
         self,
         financial_reports,
@@ -15,7 +14,6 @@ class ReportSelector:
         self.monthly_reports = monthly_reports or []
 
 
-
     def normalize(self, text):
 
         if not text:
@@ -24,20 +22,16 @@ class ReportSelector:
         text = str(text)
 
         replacements = {
-
-            "ÙŠ": "ÛŒ",
-            "Ù‰": "ÛŒ",
-            "Ùƒ": "Ú©",
+            "ÙŠ": "ی",
+            "Ù‰": "ی",
+            "Ùƒ": "ک",
             "\u200c": "",
             "\u200e": "",
             "\u200f": ""
-
         }
 
         for a, b in replacements.items():
-
             text = text.replace(a, b)
-
 
         return text
 
@@ -48,67 +42,48 @@ class ReportSelector:
         if not text:
             return ""
 
-
         replacements = {
-
-            "۰": "0",
-            "۱": "1",
-            "۲": "2",
-            "۳": "3",
-            "۴": "4",
-            "۵": "5",
-            "۶": "6",
-            "۷": "7",
-            "۸": "8",
-            "۹": "9"
-
+            "۰":"0",
+            "۱":"1",
+            "۲":"2",
+            "۳":"3",
+            "۴":"4",
+            "۵":"5",
+            "۶":"6",
+            "۷":"7",
+            "۸":"8",
+            "۹":"9"
         }
 
-
-        for a, b in replacements.items():
-
-            text = text.replace(a, b)
-
+        for a,b in replacements.items():
+            text=text.replace(a,b)
 
         return text
 
 
 
-    def extract_date(self, title):
+    def extract_date(self,title):
 
-        title = self.normalize_digits(title)
+        title=self.normalize_digits(title)
 
-
-        matches = re.findall(
-
+        matches=re.findall(
             r'140\d/\d{2}/\d{2}',
-
             title
-
         )
 
-
         if not matches:
-
             return datetime.min
-
 
 
         try:
 
-            y, m, d = matches[-1].split("/")
-
+            y,m,d=matches[-1].split("/")
 
             return datetime(
-
                 int(y),
-
                 int(m),
-
                 int(d)
-
             )
-
 
         except:
 
@@ -116,41 +91,26 @@ class ReportSelector:
 
 
 
-    def is_valid_financial_report(self, report):
+    def is_valid_financial_report(self,report):
 
-        title = self.normalize(
-
-            report.get(
-
-                "title",
-
-                ""
-
-            )
-
+        title=self.normalize(
+            report.get("title","")
         )
 
-
         if not title:
-
             return False
 
 
-        invalid_words = [
-
+        invalid=[
             "ابطال شده",
-
             "باطل شده",
-
             "پیش نویس"
-
         ]
 
 
-        for word in invalid_words:
+        for word in invalid:
 
             if word in title:
-
                 return False
 
 
@@ -158,122 +118,88 @@ class ReportSelector:
 
 
 
-    def is_annual(self, report):
+    def is_annual(self,report):
+
+        title=self.normalize(
+            report.get("title","")
+        )
 
 
-        title = self.normalize(
+        patterns=[
 
-            report.get(
+            "سال مالی",
+            "سالمالی",
+            "سالانه",
+            "صورت مالی سال",
+            "صورتهای مالی سال",
+            "صورت های مالی سال",
+            "دوره منتهی به 140",
+            "منتهی به"
 
-                "title",
+        ]
 
-                ""
 
-            )
+        for p in patterns:
 
+            if p in title:
+                return True
+
+
+        return False
+
+
+
+    def is_interim(self,report):
+
+        title=self.normalize(
+            report.get("title","")
+        )
+
+
+        patterns=[
+
+            "3 ماهه",
+            "سه ماهه",
+            "6 ماهه",
+            "شش ماهه",
+            "9 ماهه",
+            "نه ماهه",
+            "میاندوره",
+            "میان دوره"
+
+        ]
+
+
+        for p in patterns:
+
+            if p in title:
+                return True
+
+
+        return False
+
+
+
+    def is_audited(self,report):
+
+        title=self.normalize(
+            report.get("title","")
         )
 
 
         return (
-
-            "سال مالی" in title
-
-            or
-
-            "سالمالی" in title
-
-        )
-
-
-
-    def is_interim(self, report):
-
-
-        title = self.normalize(
-
-            report.get(
-
-                "title",
-
-                ""
-
-            )
-
-        )
-
-
-        return (
-
-            "میاندوره" in title
-
-            or
-
-            "میان دوره" in title
-
-            or
-
-            "دوره ۳ ماهه" in title
-
-            or
-
-            "دوره ۶ ماهه" in title
-
-            or
-
-            "دوره ۹ ماهه" in title
-
-            or
-
-            "دوره 3 ماهه" in title
-
-            or
-
-            "دوره 6 ماهه" in title
-
-            or
-
-            "دوره 9 ماهه" in title
-
-        )
-
-
-
-    def is_audited(self, report):
-
-
-        title = self.normalize(
-
-            report.get(
-
-                "title",
-
-                ""
-
-            )
-
-        )
-
-
-        return (
-
             "حسابرسی شده" in title
-
             and
-
             "نشده" not in title
-
         )
 
 
 
     def latest_financial(self):
 
+        reports=[
 
-        reports = [
-
-            r
-
-            for r in self.financial_reports
+            r for r in self.financial_reports
 
             if self.is_valid_financial_report(r)
 
@@ -281,27 +207,15 @@ class ReportSelector:
 
 
         if not reports:
-
             return None
-
 
 
         return sorted(
 
             reports,
 
-            key=lambda r:
-
-            self.extract_date(
-
-                r.get(
-
-                    "title",
-
-                    ""
-
-                )
-
+            key=lambda r:self.extract_date(
+                r.get("title","")
             ),
 
             reverse=True
@@ -312,28 +226,20 @@ class ReportSelector:
 
     def latest_annual(self):
 
+        annuals=[
 
-        annuals = [
-
-            r
-
-            for r in self.financial_reports
+            r for r in self.financial_reports
 
             if (
-
                 self.is_valid_financial_report(r)
-
                 and
-
                 self.is_annual(r)
-
             )
 
         ]
 
 
         if not annuals:
-
             return None
 
 
@@ -342,20 +248,12 @@ class ReportSelector:
 
             annuals,
 
-            key=lambda r: (
+            key=lambda r:(
 
                 self.is_audited(r),
 
                 self.extract_date(
-
-                    r.get(
-
-                        "title",
-
-                        ""
-
-                    )
-
+                    r.get("title","")
                 )
 
             ),
@@ -368,48 +266,29 @@ class ReportSelector:
 
     def latest_interim(self):
 
+        interims=[
 
-        interims = [
-
-            r
-
-            for r in self.financial_reports
+            r for r in self.financial_reports
 
             if (
-
                 self.is_valid_financial_report(r)
-
                 and
-
                 self.is_interim(r)
-
             )
 
         ]
 
 
         if not interims:
-
             return None
-
 
 
         return sorted(
 
             interims,
 
-            key=lambda r:
-
-            self.extract_date(
-
-                r.get(
-
-                    "title",
-
-                    ""
-
-                )
-
+            key=lambda r:self.extract_date(
+                r.get("title","")
             ),
 
             reverse=True
@@ -420,36 +299,22 @@ class ReportSelector:
 
     def latest_complete_financial(self):
 
-
         return self.latest_annual()
 
 
 
     def latest_monthly(self):
 
-
         if not self.monthly_reports:
-
             return None
-
 
 
         return sorted(
 
             self.monthly_reports,
 
-            key=lambda r:
-
-            self.extract_date(
-
-                r.get(
-
-                    "title",
-
-                    ""
-
-                )
-
+            key=lambda r:self.extract_date(
+                r.get("title","")
             ),
 
             reverse=True

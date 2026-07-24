@@ -26,13 +26,13 @@ class ForecastEngine:
 
 
         # ==========================================
-        # Annualized current report
+        # Annualized sales
         # ==========================================
 
         annual_factor = 12 / months
 
 
-        annualized_sales = (
+        forecast_sales = (
 
             self.company.sales *
 
@@ -43,7 +43,7 @@ class ForecastEngine:
 
 
         # ==========================================
-        # Comparable period growth
+        # Sales growth
         # ==========================================
 
         previous_sales = getattr(
@@ -58,7 +58,6 @@ class ForecastEngine:
 
 
         sales_growth = 0
-
 
 
         if previous_sales > 0:
@@ -83,29 +82,10 @@ class ForecastEngine:
 
 
         # ==========================================
-        # Forecast Sales
-        #
-        # Rule:
-        # Current report annualized.
-        # Growth is reported separately.
-        #
-        # No weighting.
-        # No scoring.
-        # No artificial multiplication.
-        # ==========================================
-
-        forecast_sales = annualized_sales
-
-
-
-        # ==========================================
         # Profit normalization
-        #
-        # Positive non operating income removed.
-        # Negative non operating income retained.
         # ==========================================
 
-        net_profit = getattr(
+        current_profit = getattr(
 
             self.company,
 
@@ -138,17 +118,14 @@ class ForecastEngine:
             )
 
 
-
-        normalized_profit = net_profit
-
+        normalized_current_profit = current_profit
 
 
         if non_operating_income > 0:
 
+            normalized_current_profit = (
 
-            normalized_profit = (
-
-                net_profit -
+                current_profit -
 
                 non_operating_income
 
@@ -157,20 +134,112 @@ class ForecastEngine:
 
 
         # ==========================================
-        # Net Margin
+        # Historical annual profit margin
+        #
+        # Prevents short-term quarter margins
+        # from inflating forecast valuation
         # ==========================================
 
-        margin = (
+        annual_sales = getattr(
 
-            normalized_profit /
+            self.company,
 
-            self.company.sales
+            "annual_previous_sales",
 
-            if self.company.sales
-
-            else 0
+            0
 
         )
+
+
+        annual_profit = getattr(
+
+            self.company,
+
+            "annual_previous_net_profit",
+
+            0
+
+        )
+
+
+        annual_non_operating = getattr(
+
+            self.company,
+
+            "annual_previous_non_operating_income",
+
+            0
+
+        )
+
+
+        if annual_non_operating > 0:
+
+            annual_profit = (
+
+                annual_profit -
+
+                annual_non_operating
+
+            )
+
+
+
+        historical_margin = 0
+
+
+        if annual_sales > 0:
+
+            historical_margin = (
+
+                annual_profit /
+
+                annual_sales
+
+            )
+
+
+
+        current_margin = 0
+
+
+        if self.company.sales > 0:
+
+            current_margin = (
+
+                normalized_current_profit /
+
+                self.company.sales
+
+            )
+
+
+
+        # ==========================================
+        # Conservative blended margin
+        #
+        # Current quarter has higher weight,
+        # but previous annual performance limits
+        # temporary spikes.
+        # ==========================================
+
+        if historical_margin > 0 and current_margin > 0:
+
+            margin = (
+
+                (current_margin * 0.35) +
+
+                (historical_margin * 0.65)
+
+            )
+
+        elif historical_margin > 0:
+
+            margin = historical_margin
+
+        else:
+
+            margin = current_margin
 
 
 
@@ -187,8 +256,7 @@ class ForecastEngine:
         profit_growth = 0
 
 
-
-        if normalized_profit != 0:
+        if normalized_current_profit != 0:
 
 
             profit_growth = (
@@ -197,13 +265,13 @@ class ForecastEngine:
 
                     forecast_profit -
 
-                    normalized_profit
+                    normalized_current_profit
 
                 )
 
                 /
 
-                normalized_profit
+                normalized_current_profit
 
             ) * 100
 
@@ -219,7 +287,7 @@ class ForecastEngine:
 
             "current_profit":
 
-                normalized_profit,
+                normalized_current_profit,
 
 
             "forecast_sales":
@@ -267,7 +335,7 @@ class ForecastEngine:
 
             "method":
 
-                "annualized_sales_margin",
+                "historical_adjusted_sales_margin",
 
 
             "period_months":
@@ -294,6 +362,7 @@ class ForecastEngine:
         if method == "sales_margin":
 
             return self.sales_margin_forecast()
+
 
 
         return self.sales_margin_forecast()
