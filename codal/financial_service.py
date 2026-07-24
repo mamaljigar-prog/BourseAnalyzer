@@ -185,9 +185,21 @@ class FinancialService:
 
 if __name__ == "__main__":
 
+    import sys
+
+
+    if len(sys.argv) > 1:
+
+        symbol = sys.argv[1]
+
+    else:
+
+        symbol = input("Enter Symbol: ").strip()
+
+
 
     service = FinancialService(
-        "خراسان"
+        symbol
     )
 
 

@@ -46,22 +46,21 @@ class ReportSelector:
     def normalize_digits(self, text):
 
         if not text:
-
             return ""
 
 
         replacements = {
 
-            "Û°": "0",
-            "Û±": "1",
-            "Û²": "2",
-            "Û³": "3",
-            "Û´": "4",
-            "Ûµ": "5",
-            "Û¶": "6",
-            "Û·": "7",
-            "Û¸": "8",
-            "Û¹": "9"
+            "۰": "0",
+            "۱": "1",
+            "۲": "2",
+            "۳": "3",
+            "۴": "4",
+            "۵": "5",
+            "۶": "6",
+            "۷": "7",
+            "۸": "8",
+            "۹": "9"
 
         }
 
@@ -114,6 +113,48 @@ class ReportSelector:
         except:
 
             return datetime.min
+
+
+
+    def is_valid_financial_report(self, report):
+
+        title = self.normalize(
+
+            report.get(
+
+                "title",
+
+                ""
+
+            )
+
+        )
+
+
+        if not title:
+
+            return False
+
+
+        invalid_words = [
+
+            "ابطال شده",
+
+            "باطل شده",
+
+            "پیش نویس"
+
+        ]
+
+
+        for word in invalid_words:
+
+            if word in title:
+
+                return False
+
+
+        return True
 
 
 
@@ -181,6 +222,18 @@ class ReportSelector:
 
             "دوره ۹ ماهه" in title
 
+            or
+
+            "دوره 3 ماهه" in title
+
+            or
+
+            "دوره 6 ماهه" in title
+
+            or
+
+            "دوره 9 ماهه" in title
+
         )
 
 
@@ -213,6 +266,50 @@ class ReportSelector:
 
 
 
+    def latest_financial(self):
+
+
+        reports = [
+
+            r
+
+            for r in self.financial_reports
+
+            if self.is_valid_financial_report(r)
+
+        ]
+
+
+        if not reports:
+
+            return None
+
+
+
+        return sorted(
+
+            reports,
+
+            key=lambda r:
+
+            self.extract_date(
+
+                r.get(
+
+                    "title",
+
+                    ""
+
+                )
+
+            ),
+
+            reverse=True
+
+        )[0]
+
+
+
     def latest_annual(self):
 
 
@@ -222,7 +319,15 @@ class ReportSelector:
 
             for r in self.financial_reports
 
-            if self.is_annual(r)
+            if (
+
+                self.is_valid_financial_report(r)
+
+                and
+
+                self.is_annual(r)
+
+            )
 
         ]
 
@@ -270,7 +375,15 @@ class ReportSelector:
 
             for r in self.financial_reports
 
-            if self.is_interim(r)
+            if (
+
+                self.is_valid_financial_report(r)
+
+                and
+
+                self.is_interim(r)
+
+            )
 
         ]
 
@@ -302,13 +415,6 @@ class ReportSelector:
             reverse=True
 
         )[0]
-
-
-
-    def latest_financial(self):
-
-
-        return self.latest_annual()
 
 
 

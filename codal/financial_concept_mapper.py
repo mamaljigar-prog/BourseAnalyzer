@@ -6,23 +6,47 @@ class FinancialConceptMapper:
         if text is None:
             return ""
 
+
         text = str(text)
 
+
         replacements = {
+
             "ي": "ی",
             "ى": "ی",
+            "ئ": "ی",
+
             "ك": "ک",
+
+            "ۀ": "ه",
+            "ة": "ه",
+
             "‌": "",
             " ": "",
+
             "\u200f": "",
             "\u200e": "",
+
             "(": "",
             ")": "",
+
             "ـ": "",
+            "-": "",
+
+            "زيان": "زیان",
+            "عمليات": "عملیات",
+            "عملياتى": "عملیاتی"
+
         }
 
+
         for a, b in replacements.items():
-            text = text.replace(a, b)
+
+            text = text.replace(
+                a,
+                b
+            )
+
 
         return text.lower()
 
@@ -32,18 +56,32 @@ class FinancialConceptMapper:
 
         rows = {}
 
+
         for cell in cells:
 
+
             if cell.get("columnCode") != 1:
+
                 continue
 
-            row_code = cell.get("rowCode")
 
-            title = cell.get("value", "")
+            row_code = cell.get(
+                "rowCode"
+            )
+
+
+            title = cell.get(
+                "value",
+                ""
+            )
+
 
             if row_code:
 
-                rows[row_code] = self.normalize(title)
+                rows[row_code] = self.normalize(
+                    title
+                )
+
 
         return rows
 
@@ -53,15 +91,27 @@ class FinancialConceptMapper:
         self,
         title,
         include_words,
-        exclude_words
+        exclude_words=None
     ):
+
+
+        if exclude_words is None:
+
+            exclude_words = []
+
 
         score = 0
 
 
         for word in include_words:
 
-            if self.normalize(word) in title:
+
+            word = self.normalize(
+                word
+            )
+
+
+            if word in title:
 
                 score += 10
 
@@ -73,7 +123,13 @@ class FinancialConceptMapper:
 
         for word in exclude_words:
 
-            if self.normalize(word) in title:
+
+            word = self.normalize(
+                word
+            )
+
+
+            if word in title:
 
                 score -= 20
 
@@ -91,16 +147,8 @@ class FinancialConceptMapper:
     ):
 
 
-        if exclude_words is None:
-
-            exclude_words = []
-
-
-
         best_code = None
-
         best_score = -1
-
 
 
         for code, title in rows.items():
@@ -116,7 +164,6 @@ class FinancialConceptMapper:
             if score > best_score:
 
                 best_score = score
-
                 best_code = code
 
 
@@ -128,33 +175,26 @@ class FinancialConceptMapper:
     def map_income_statement(self, cells):
 
 
-        rows = self.get_rows(cells)
-
+        rows = self.get_rows(
+            cells
+        )
 
 
         result = {
 
-
             "sales": None,
-
 
             "gross_profit": None,
 
-
             "operating_profit": None,
-
 
             "net_profit": None,
 
-
             "non_operating_income": None
-
 
         }
 
 
-
-        # درآمد عملیاتی
 
         result["sales"] = self.find_best_match(
 
@@ -167,14 +207,13 @@ class FinancialConceptMapper:
 
             [
                 "هزینه",
-                "هرسهم"
+                "هرسهم",
+                "تغییرات"
             ]
 
         )
 
 
-
-        # سود ناخالص
 
         result["gross_profit"] = self.find_best_match(
 
@@ -193,8 +232,6 @@ class FinancialConceptMapper:
 
 
 
-        # سود عملیاتی
-
         result["operating_profit"] = self.find_best_match(
 
             rows,
@@ -208,14 +245,13 @@ class FinancialConceptMapper:
                 "خالص",
                 "ناخالص",
                 "هرسهم",
-                "قبل"
+                "پایه",
+                "مالیات"
             ]
 
         )
 
 
-
-        # سود خالص
 
         result["net_profit"] = self.find_best_match(
 
@@ -231,15 +267,12 @@ class FinancialConceptMapper:
                 "عملیاتی",
                 "هرسهم",
                 "پایه",
-                "قبل",
-                "مالیات"
+                "قبل"
             ]
 
         )
 
 
-
-        # درآمد غیرعملیاتی
 
         result["non_operating_income"] = self.find_best_match(
 
@@ -254,7 +287,6 @@ class FinancialConceptMapper:
             ]
 
         )
-
 
 
         return result

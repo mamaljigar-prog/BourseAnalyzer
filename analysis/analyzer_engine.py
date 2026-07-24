@@ -2,189 +2,230 @@ from models.company import Company
 
 from tsetmc.tsetmc_adapter import TSETMCAdapter
 from tsetmc.tsetmc_market import MarketData
+from tsetmc.symbol_resolver import SymbolResolver
 
-from codal.financial_adapter import FinancialAdapter
-from codal.balance_sheet_parser import BalanceSheetParser
+from codal.codal_report_service import CodalReportService
 from codal.sheet_loader import CodalSheetLoader
 from codal.sheet_selector import SheetSelector
+from codal.financial_adapter import FinancialAdapter
+from codal.balance_sheet_parser import BalanceSheetParser
+from codal.report_period_detector import ReportPeriodDetector
 
-from financial.balance_sheet_mapper import BalanceSheetMapper
-
-from valuation.valuation_model import calculate_valuation
-
+from analysis.company_classifier import CompanyClassifier
+from analysis.analysis_strategy import AnalysisStrategy
 from analysis.profit_quality import ProfitQualityAnalyzer
 from analysis.final_analyzer import FinalAnalyzer
 from analysis.report_generator import ReportGenerator
-from analysis.company_classifier import CompanyClassifier
-from analysis.analysis_strategy import AnalysisStrategy
 
+from forecast.forecast_engine import ForecastEngine
+from valuation.valuation_engine import ValuationEngine
 
 
 class AnalyzerEngine:
 
+    def __init__(self, symbol):
 
-    def __init__(
-        self,
-        ins_code,
-        company_name,
-        codal_url
-    ):
-
-        self.ins_code = ins_code
-        self.company_name = company_name
-        self.codal_url = codal_url
-
-
-
-    def build_sheet_url(
-        self,
-        base_url,
-        sheet_id
-    ):
-
-        if "sheetId=" in base_url:
-
-            before = base_url.split(
-                "sheetId="
-            )[0]
-
-            return before + f"sheetId={sheet_id}"
-
-
-        separator = (
-            "&"
-            if "?" in base_url
-            else "?"
-        )
-
-        return (
-            base_url +
-            separator +
-            f"sheetId={sheet_id}"
-        )
-
-
+        self.symbol = symbol
 
     def run(self):
 
+        # =========================
+        # Symbol Resolver
+        # =========================
+
+        resolver = SymbolResolver()
+
+        ins_code = resolver.find_ins_code(
+            self.symbol
+        )
+
+        if not ins_code:
+
+            raise ValueError(
+                "Symbol not found"
+            )
+
+        # =========================
+        # Market Data
+        # =========================
 
         api = TSETMCAdapter()
 
-
         closing = api.get_closing_price(
-            self.ins_code
+            ins_code
         )
-
 
         info = api.get_instrument_info(
-            self.ins_code
+            ins_code
         )
-
 
         market = MarketData(
             closing,
             info
         )
 
-
         live = market.report()
 
-
-
-        income_url = self.build_sheet_url(
-            self.codal_url,
-            1
+        company_name = (
+            api.get_company_name(info)
+            or
+            self.symbol
         )
 
+        # =========================
+        # Codal Report
+        # =========================
+
+        codal_service = CodalReportService(
+            self.symbol
+        )
+
+        codal_report = (
+            codal_service
+            .get_latest_financial_report()
+        )
+
+        if not codal_report:
+
+            raise ValueError(
+                "No financial report selected"
+            )
+
+        report_url = codal_report.get(
+            "url"
+        )
+
+        if not report_url:
+
+            raise ValueError(
+                "Report URL not found"
+            )
+
+        # =========================
+        # Report Period Detection
+        # =========================
+
+        report_title = codal_report.get(
+            "title",
+            ""
+        )
+
+        period_detector = ReportPeriodDetector(
+            report_title
+        )
+
+        period_info = (
+            period_detector.detect()
+        )
+
+        period_months = period_info.get(
+            "months",
+            12
+        )
+
+        if not period_months or period_months <= 0:
+
+            period_months = 12
+
+        # =========================
+        # Sheets
+        # =========================
+
+        loader = CodalSheetLoader(
+            report_url
+        )
+
+        sheets = loader.get_sheet_options()
+
+        selected = SheetSelector(
+            sheets
+        ).report()
+
+        income_sheet = selected.get(
+            "income_statement"
+        )
+
+        balance_sheet = selected.get(
+            "balance_sheet"
+        )
+
+        if not income_sheet:
+
+            raise ValueError(
+                "Income statement sheet not found"
+            )
+
+        if not balance_sheet:
+
+            raise ValueError(
+                "Balance sheet sheet not found"
+            )
+
+        # =========================
+        # Financial Data
+        # =========================
 
         financial = FinancialAdapter(
-            income_url
+            income_sheet["url"]
         )
-
 
         data = financial.report()
 
-
-
-        balance_url = self.build_sheet_url(
-            self.codal_url,
-            0
-        )
-
-
-        sheets = CodalSheetLoader(
-            balance_url
-        ).get_sheet_options()
-
-
-        balance_sheet = SheetSelector(
-            sheets
-        ).report()["balance_sheet"]
-
-
+        # =========================
+        # Balance Sheet
+        # =========================
 
         balance_parser = BalanceSheetParser(
             balance_sheet["url"]
         )
 
-
-        sheet = balance_parser.find_balance_sheet(
-            balance_parser.extract_sheets()
+        balance = (
+            balance_parser
+            .get_balance_data()
         )
 
-
-        cells = balance_parser.get_balance_table(
-            sheet
-        )["cells"]
-
-
-        balance_data = BalanceSheetMapper(
-            cells
-        ).map()
-
-
-        balance = balance_data.to_dict()
-
-
-        balance["balanced"] = (
-
-            balance["assets"]
-            ==
-            balance["liabilities"]
-            +
-            balance["equity"]
-            +
-            balance.get(
-                "non_controlling_interest",
-                0
-            )
-
+        assets = balance.get(
+            "assets",
+            0
         )
 
+        equity = balance.get(
+            "equity",
+            0
+        )
 
-        assets = balance["assets"]
-        equity = balance["equity"]
-        liabilities = balance["liabilities"]
+        liabilities = balance.get(
+            "liabilities",
+            0
+        )
 
-
+        # =========================
+        # Company Object
+        # =========================
 
         company = Company(
 
-            name=self.company_name,
+            name=company_name,
 
-            symbol=live["symbol"],
+            symbol=self.symbol,
 
             sales=data["sales"],
 
-            operating_profit=data["operating_profit"],
+            operating_profit=data[
+                "operating_profit"
+            ],
 
-            net_profit=data["net_profit"],
+            net_profit=data[
+                "net_profit"
+            ],
 
             assets=assets,
 
             equity=equity,
 
-            market_cap=live["market_cap"],
+            market_cap=live[
+                "market_cap"
+            ],
 
             non_operating_income=data.get(
                 "non_operating_income",
@@ -193,25 +234,34 @@ class AnalyzerEngine:
 
         )
 
-
+        # =========================
+        # Company Classification
+        # =========================
 
         company_structure = CompanyClassifier(
 
             {
 
-                "sales": company.sales,
+                "sales":
+                    company.sales,
 
-                "operating_profit": company.operating_profit,
+                "operating_profit":
+                    company.operating_profit,
 
-                "net_profit": company.net_profit,
+                "net_profit":
+                    company.net_profit,
 
-                "non_operating_income": company.non_operating_income,
+                "non_operating_income":
+                    company.non_operating_income,
 
-                "assets": company.assets,
+                "assets":
+                    company.assets,
 
-                "equity": company.equity,
+                "equity":
+                    company.equity,
 
-                "liabilities": liabilities
+                "liabilities":
+                    liabilities
 
             },
 
@@ -219,7 +269,9 @@ class AnalyzerEngine:
 
         ).classify()
 
-
+        # =========================
+        # Strategy
+        # =========================
 
         analysis_strategy = AnalysisStrategy(
 
@@ -227,40 +279,23 @@ class AnalyzerEngine:
 
         ).get_strategy()
 
+        # =========================
+        # Forecast
+        # =========================
 
+        forecast = ForecastEngine(
 
-        months_passed = 9
+            company,
 
+            analysis_strategy,
 
-        forecast_sales = (
+            period_months=period_months
 
-            company.sales /
-            months_passed
+        ).run()
 
-        ) * 12
-
-
-
-        margin = (
-
-            company.net_profit /
-            company.sales
-
-            if company.sales
-
-            else 0
-
-        )
-
-
-        forecast_profit = (
-
-            forecast_sales *
-            margin
-
-        )
-
-
+        # =========================
+        # Profit Quality
+        # =========================
 
         profit_quality = ProfitQualityAnalyzer(
 
@@ -272,33 +307,35 @@ class AnalyzerEngine:
 
         ).analyze()
 
+        # =========================
+        # Valuation
+        # =========================
 
+        valuation = ValuationEngine(
 
-        valuation = calculate_valuation(
+            company,
 
-            market_cap=company.market_cap,
+            forecast,
 
-            forecast_sales=forecast_sales / 10000,
+            analysis_strategy
 
-            forecast_profit=forecast_profit / 10000,
+        ).run()
 
-            equity=company.equity,
-
-            assets=company.assets,
-
-            dividend=11570
-
-        )
-
-
+        # =========================
+        # Final Analysis
+        # =========================
 
         final = FinalAnalyzer(
 
             company,
 
-            forecast_sales,
+            forecast[
+                "forecast_sales"
+            ],
 
-            forecast_profit,
+            forecast[
+                "forecast_profit"
+            ],
 
             profit_quality,
 
@@ -306,15 +343,21 @@ class AnalyzerEngine:
 
         ).generate()
 
-
+        # =========================
+        # Report
+        # =========================
 
         report = ReportGenerator().generate(
 
             company,
 
-            forecast_sales,
+            forecast[
+                "forecast_sales"
+            ],
 
-            forecast_profit,
+            forecast[
+                "forecast_profit"
+            ],
 
             profit_quality,
 
@@ -323,30 +366,59 @@ class AnalyzerEngine:
             liabilities,
 
             (
+
                 "Healthy"
-                if balance["balanced"]
+
+                if balance.get(
+                    "balanced",
+                    False
+                )
+
                 else
+
                 "Warning"
+
             ),
 
-            company_structure=company_structure,
+            company_structure=
+                company_structure,
 
-            analysis_strategy=analysis_strategy
+            analysis_strategy=
+                analysis_strategy
 
         )
 
-
+        # =========================
+        # Return Result
+        # =========================
 
         return {
 
-            "company": company,
+            "company":
+                company,
 
-            "analysis": final,
+            "analysis":
+                final,
 
-            "report": report,
+            "report":
+                report,
 
-            "company_structure": company_structure,
+            "company_structure":
+                company_structure,
 
-            "analysis_strategy": analysis_strategy
+            "analysis_strategy":
+                analysis_strategy,
+
+            "forecast":
+                forecast,
+
+            "valuation":
+                valuation,
+
+            "period_info":
+                period_info,
+
+            "period_months":
+                period_months
 
         }

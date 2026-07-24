@@ -10,7 +10,8 @@ class MarketData:
 
     def price(self):
 
-        return self.closing_data["pDrCotVal"]
+        # قیمت پایانی سهم
+        return self.closing_data["pClosing"]
 
 
 
@@ -26,13 +27,13 @@ class MarketData:
         shares = self.shares()
 
 
-        # ریال به تومان و میلیارد تومان
-
         value = (
             price *
             shares
         )
 
+
+        # ریال به تومان و میلیارد تومان
 
         return round(
             value / 10 / 1_000_000_000,

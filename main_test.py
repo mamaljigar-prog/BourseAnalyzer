@@ -1,5 +1,3 @@
-import sys
-
 from core.analyzer_engine import AnalyzerEngine
 from core.analyzer_request import AnalyzerRequest
 
@@ -7,47 +5,17 @@ from core.analyzer_request import AnalyzerRequest
 
 def main():
 
+
     print("==============================")
     print("Bourse Analyzer")
     print("==============================")
 
 
-    # دریافت نماد از خط فرمان
-    if len(sys.argv) > 1:
-
-        symbol = sys.argv[1]
-
-    else:
-
-        symbol = input(
-            "Enter Symbol: "
-        ).strip()
-
-
-
-    if not symbol:
-
-        print(
-            "No symbol provided"
-        )
-
-        return
-
-
-
-    print(
-        "INPUT SYMBOL:",
-        symbol
-    )
-
-
-
     request = AnalyzerRequest(
 
-        symbol=symbol
+        symbol="فولاد"
 
     )
-
 
 
     engine = AnalyzerEngine(
@@ -57,9 +25,7 @@ def main():
     )
 
 
-
     result = engine.run()
-
 
 
     print(

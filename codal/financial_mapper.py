@@ -14,37 +14,101 @@ class FinancialMapper:
 
     def extract_value(self, row_code):
 
+
         if row_code is None:
-            return None
+
+            return 0
+
+
+
+        print(
+            "DEBUG EXTRACT ROW:",
+            row_code
+        )
+
+
+        found = False
+
 
 
         for cell in self.cells:
 
-            if (
-                cell.get("columnCode") == 2
-                and cell.get("rowCode") == row_code
-            ):
 
-                value = cell.get("value")
+            if cell.get("rowCode") == row_code:
 
-                if value:
 
-                    value = (
-                        str(value)
-                        .replace(",", "")
-                        .replace("(", "-")
-                        .replace(")", "")
+                found = True
+
+
+                print(
+                    "CELL:",
+                    cell
+                )
+
+
+                column = cell.get(
+                    "columnCode"
+                )
+
+
+                # ستون اصلی گزارش معمولا 2 است
+                # ولی بعضی گزارش‌ها ممکن است متفاوت باشند
+
+                if column in [2, 3, 4]:
+
+
+                    value = cell.get(
+                        "value"
                     )
 
+
+                    if value is None:
+
+                        continue
+
+
+
+                    value = (
+
+                        str(value)
+
+                        .replace(",", "")
+
+                        .replace("(", "-")
+
+                        .replace(")", "")
+
+                        .replace(" ", "")
+
+                    )
+
+
                     try:
-                        return float(value)
+
+                        return int(
+                            float(value)
+                        )
+
 
                     except:
 
-                        return value
+
+                        continue
 
 
-        return None
+
+
+        if not found:
+
+            print(
+                "ROW NOT FOUND:",
+                row_code
+            )
+
+
+        return 0
+
+
 
 
 
@@ -52,18 +116,40 @@ class FinancialMapper:
 
 
         concepts = self.concept_mapper.map_income_statement(
+
             self.cells
+
         )
+
+
+
+        print()
+
+        print(
+            "DEBUG MAPPED CONCEPTS"
+        )
+
+        print(
+            concepts
+        )
+
+        print()
+
 
 
         result = {}
 
 
+
         for key, row_code in concepts.items():
 
+
             result[key] = self.extract_value(
+
                 row_code
+
             )
+
 
 
         return result
