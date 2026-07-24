@@ -10,31 +10,46 @@ class ForecastEngine:
 
         self.company = company
         self.strategy = strategy
-        self.period_months = period_months
+
+        self.period_months = (
+            period_months
+            if period_months and period_months > 0
+            else 12
+        )
 
 
 
     def sales_margin_forecast(self):
 
-
         months = self.period_months
 
 
-        if months <= 0:
-            months = 12
-
-
-
         # ==========================================
-        # Annualized sales
+        # Annualization
+        #
+        # Reports are cumulative from start of
+        # financial year.
+        #
+        # Example:
+        # 3 months  -> x4
+        # 6 months  -> x2
+        # 9 months  -> x1.33
+        # 12 months -> x1
         # ==========================================
 
         annual_factor = 12 / months
 
 
+        current_sales = getattr(
+            self.company,
+            "sales",
+            0
+        )
+
+
         forecast_sales = (
 
-            self.company.sales *
+            current_sales *
 
             annual_factor
 
@@ -62,12 +77,11 @@ class ForecastEngine:
 
         if previous_sales > 0:
 
-
             sales_growth = (
 
                 (
 
-                    self.company.sales -
+                    current_sales -
 
                     previous_sales
 
@@ -82,7 +96,7 @@ class ForecastEngine:
 
 
         # ==========================================
-        # Profit normalization
+        # Current profit normalization
         # ==========================================
 
         current_profit = getattr(
@@ -107,23 +121,23 @@ class ForecastEngine:
         )
 
 
-        if isinstance(non_operating_income, dict):
+        if isinstance(
+            non_operating_income,
+            dict
+        ):
 
             non_operating_income = non_operating_income.get(
-
                 "current",
-
                 0
-
             )
 
 
-        normalized_current_profit = current_profit
+        normalized_profit = current_profit
 
 
         if non_operating_income > 0:
 
-            normalized_current_profit = (
+            normalized_profit = (
 
                 current_profit -
 
@@ -134,10 +148,29 @@ class ForecastEngine:
 
 
         # ==========================================
-        # Historical annual profit margin
+        # Current margin
+        # ==========================================
+
+        current_margin = 0
+
+
+        if current_sales > 0:
+
+            current_margin = (
+
+                normalized_profit /
+
+                current_sales
+
+            )
+
+
+
+        # ==========================================
+        # Previous annual margin
         #
-        # Prevents short-term quarter margins
-        # from inflating forecast valuation
+        # Used only as quality control.
+        # Not mandatory.
         # ==========================================
 
         annual_sales = getattr(
@@ -184,7 +217,6 @@ class ForecastEngine:
             )
 
 
-
         historical_margin = 0
 
 
@@ -200,48 +232,45 @@ class ForecastEngine:
 
 
 
-        current_margin = 0
-
-
-        if self.company.sales > 0:
-
-            current_margin = (
-
-                normalized_current_profit /
-
-                self.company.sales
-
-            )
-
-
-
         # ==========================================
-        # Conservative blended margin
+        # Profit margin selection
         #
-        # Current quarter has higher weight,
-        # but previous annual performance limits
-        # temporary spikes.
+        # Current period is the main signal.
+        # Historical annual margin prevents
+        # temporary abnormal profitability.
         # ==========================================
 
-        if historical_margin > 0 and current_margin > 0:
+        if (
+            historical_margin > 0
+            and
+            current_margin > 0
+        ):
 
             margin = (
 
-                (current_margin * 0.35) +
+                current_margin * 0.7
 
-                (historical_margin * 0.65)
+                +
+
+                historical_margin * 0.3
 
             )
 
-        elif historical_margin > 0:
 
-            margin = historical_margin
-
-        else:
+        elif current_margin > 0:
 
             margin = current_margin
 
 
+        else:
+
+            margin = historical_margin
+
+
+
+        # ==========================================
+        # Forecast profit
+        # ==========================================
 
         forecast_profit = (
 
@@ -256,8 +285,7 @@ class ForecastEngine:
         profit_growth = 0
 
 
-        if normalized_current_profit != 0:
-
+        if normalized_profit != 0:
 
             profit_growth = (
 
@@ -265,13 +293,13 @@ class ForecastEngine:
 
                     forecast_profit -
 
-                    normalized_current_profit
+                    normalized_profit
 
                 )
 
                 /
 
-                normalized_current_profit
+                abs(normalized_profit)
 
             ) * 100
 
@@ -282,12 +310,12 @@ class ForecastEngine:
 
             "current_sales":
 
-                self.company.sales,
+                current_sales,
 
 
             "current_profit":
 
-                normalized_current_profit,
+                normalized_profit,
 
 
             "forecast_sales":
@@ -303,45 +331,35 @@ class ForecastEngine:
             "sales_growth":
 
                 round(
-
                     sales_growth,
-
                     2
-
                 ),
 
 
             "profit_growth":
 
                 round(
-
                     profit_growth,
-
                     2
-
                 ),
 
 
             "net_margin":
 
                 round(
-
                     margin * 100,
-
                     2
-
                 ),
 
 
             "method":
 
-                "historical_adjusted_sales_margin",
+                "period_based_sales_margin",
 
 
             "period_months":
 
                 months
-
 
         }
 
@@ -349,20 +367,15 @@ class ForecastEngine:
 
     def run(self):
 
-
         method = self.strategy.get(
-
             "forecast",
-
             "sales_margin"
-
         )
 
 
         if method == "sales_margin":
 
             return self.sales_margin_forecast()
-
 
 
         return self.sales_margin_forecast()
