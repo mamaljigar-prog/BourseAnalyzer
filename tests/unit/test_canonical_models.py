@@ -85,10 +85,20 @@ def test_financial_line_item_contract() -> None:
 
 def test_financial_line_item_rejects_invalid_confidence() -> None:
     with pytest.raises(ValueError):
-        FinancialLineItem(concept="revenue", value=1, confidence=-0.1)
+        FinancialLineItem(
+            concept="revenue",
+            value=1,
+            unit="rial",
+            confidence=-0.1,
+        )
 
     with pytest.raises(ValueError):
-        FinancialLineItem(concept="revenue", value=1, confidence=1.1)
+        FinancialLineItem(
+            concept="revenue",
+            value=1,
+            unit="rial",
+            confidence=1.1,
+        )
 
 
 def test_financial_report_contract() -> None:
@@ -104,7 +114,8 @@ def test_financial_report_contract() -> None:
         symbol="درهآور",
         report_type="interim",
         period="9M",
-        fiscal_year=1404,
+        duration_months=9,
+        source="Codal",
         income_statement={"revenue": revenue},
         balance_sheet={},
         cash_flow={},
@@ -114,17 +125,46 @@ def test_financial_report_contract() -> None:
     assert report.symbol == "درهآور"
     assert report.report_type == "interim"
     assert report.period == "9M"
-    assert report.fiscal_year == 1404
+    assert report.duration_months == 9
+    assert report.source == "Codal"
     assert report.income_statement["revenue"] is revenue
     assert report.balance_sheet == {}
     assert report.cash_flow == {}
     assert report.provenance["source"] == "Codal"
 
 
+def test_financial_report_rejects_invalid_duration() -> None:
+    with pytest.raises(ValueError):
+        FinancialReport(
+            symbol="درهآور",
+            duration_months=0,
+        )
+
+    with pytest.raises(ValueError):
+        FinancialReport(
+            symbol="درهآور",
+            duration_months=-1,
+        )
+
+
+def test_financial_report_rejects_invalid_statement_item() -> None:
+    with pytest.raises(TypeError):
+        FinancialReport(
+            symbol="درهآور",
+            income_statement={
+                "revenue": "invalid",
+            },
+        )
+
+
 def test_canonical_models_are_immutable() -> None:
     identity = CompanyIdentity(symbol="درهآور")
     snapshot = MarketSnapshot(symbol="درهآور")
-    item = FinancialLineItem(concept="revenue", value=1)
+    item = FinancialLineItem(
+        concept="revenue",
+        value=1,
+        unit="rial",
+    )
     report = FinancialReport(symbol="درهآور")
 
     with pytest.raises(Exception):
