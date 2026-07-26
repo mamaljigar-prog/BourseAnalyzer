@@ -9,20 +9,32 @@ class FinancialConceptMapper:
         text = str(text)
 
         replacements = {
+
             "ي": "ی",
             "ى": "ی",
             "ك": "ک",
+
+            "ۀ": "ه",
+
             "‌": "",
-            " ": "",
             "\u200f": "",
             "\u200e": "",
+
             "(": "",
             ")": "",
+
             "ـ": "",
+
+            " ": "",
+
+            "‌": ""
+
         }
+
 
         for a, b in replacements.items():
             text = text.replace(a, b)
+
 
         return text.lower()
 
@@ -32,18 +44,30 @@ class FinancialConceptMapper:
 
         rows = {}
 
+
         for cell in cells:
 
             if cell.get("columnCode") != 1:
                 continue
 
-            row_code = cell.get("rowCode")
 
-            title = cell.get("value", "")
+            row_code = cell.get(
+                "rowCode"
+            )
+
+
+            title = cell.get(
+                "value",
+                ""
+            )
+
 
             if row_code:
 
-                rows[row_code] = self.normalize(title)
+                rows[row_code] = self.normalize(
+                    title
+                )
+
 
         return rows
 
@@ -53,15 +77,25 @@ class FinancialConceptMapper:
         self,
         title,
         include_words,
-        exclude_words
+        exclude_words=None
     ):
+
+
+        if exclude_words is None:
+            exclude_words = []
+
 
         score = 0
 
 
         for word in include_words:
 
-            if self.normalize(word) in title:
+            normalized = self.normalize(
+                word
+            )
+
+
+            if normalized in title:
 
                 score += 10
 
@@ -73,7 +107,12 @@ class FinancialConceptMapper:
 
         for word in exclude_words:
 
-            if self.normalize(word) in title:
+            normalized = self.normalize(
+                word
+            )
+
+
+            if normalized in title:
 
                 score -= 20
 
@@ -91,32 +130,27 @@ class FinancialConceptMapper:
     ):
 
 
-        if exclude_words is None:
-
-            exclude_words = []
-
-
-
         best_code = None
-
         best_score = -1
-
 
 
         for code, title in rows.items():
 
 
             score = self.score_match(
+
                 title,
+
                 include_words,
+
                 exclude_words
+
             )
 
 
             if score > best_score:
 
                 best_score = score
-
                 best_code = code
 
 
@@ -125,11 +159,15 @@ class FinancialConceptMapper:
 
 
 
-    def map_income_statement(self, cells):
+    def map_income_statement(
+        self,
+        cells
+    ):
 
 
-        rows = self.get_rows(cells)
-
+        rows = self.get_rows(
+            cells
+        )
 
 
         result = {
@@ -137,18 +175,13 @@ class FinancialConceptMapper:
 
             "sales": None,
 
-
             "gross_profit": None,
-
 
             "operating_profit": None,
 
-
             "net_profit": None,
 
-
             "non_operating_income": None
-
 
         }
 
@@ -194,6 +227,8 @@ class FinancialConceptMapper:
 
 
         # سود عملیاتی
+        # الگوی واقعی Codal:
+        # سود(زیان) عملیاتى
 
         result["operating_profit"] = self.find_best_match(
 
@@ -205,13 +240,36 @@ class FinancialConceptMapper:
             ],
 
             [
+
                 "خالص",
+
                 "ناخالص",
+
                 "هرسهم",
-                "قبل"
+
+                "قبل",
+
+                "مالیات"
+
             ]
 
         )
+
+
+        if result["operating_profit"] is None:
+
+
+            result["operating_profit"] = self.find_best_match(
+
+                rows,
+
+                [
+                    "سود",
+                    "زیان",
+                    "عملیاتی"
+                ]
+
+            )
 
 
 
@@ -227,12 +285,17 @@ class FinancialConceptMapper:
             ],
 
             [
+
                 "ناخالص",
+
                 "عملیاتی",
+
                 "هرسهم",
-                "پایه",
+
                 "قبل",
+
                 "مالیات"
+
             ]
 
         )
@@ -254,7 +317,6 @@ class FinancialConceptMapper:
             ]
 
         )
-
 
 
         return result

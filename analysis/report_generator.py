@@ -1,6 +1,5 @@
 class ReportGenerator:
 
-
     def generate(
         self,
         company,
@@ -14,44 +13,105 @@ class ReportGenerator:
         industry_rank=None
     ):
 
+        # =========================
+        # Financial Period
+        # =========================
 
-        sales_growth = (
+        period_type = None
 
-            (
-                forecast_sales - company.sales
-            )
-            /
-            company.sales
-            *
-            100
+        duration_months = None
 
-            if company.sales
+        annualization_factor = None
 
-            else 0
+        report_period_end = None
 
+        fiscal_year_end = None
+
+        forecast_method = None
+
+        growth_method = (
+            "Comparable-period growth "
+            "not available yet"
         )
 
+        if report_period:
 
-        profit_growth = (
-
-            (
-                forecast_profit - company.net_profit
+            period_type = (
+                report_period.get(
+                    "period_type"
+                )
             )
-            /
-            company.net_profit
-            *
-            100
 
-            if company.net_profit
+            duration_months = (
+                report_period.get(
+                    "duration_months"
+                )
+            )
 
-            else 0
+            annualization_factor = (
+                report_period.get(
+                    "annualization_factor"
+                )
+            )
 
-        )
+            report_period_end = (
+                report_period.get(
+                    "period"
+                )
+            )
 
+            fiscal_year_end = (
+                report_period.get(
+                    "fiscal_year_end"
+                )
+            )
+
+            forecast_method = (
+                report_period.get(
+                    "forecast_method"
+                )
+            )
+
+            growth_method = (
+                report_period.get(
+                    "growth_method",
+                    growth_method
+                )
+            )
+
+        # =========================
+        # Comparable Growth
+        # =========================
+
+        # Forecast سالانه‌شده با دوره جاری
+        # قابل مقایسه نیست.
+        #
+        # مثال:
+        #
+        # 3M Current Sales:
+        # 3,814,414
+        #
+        # Annual Forecast:
+        # 15,257,656
+        #
+        # این اختلاف 300 درصد رشد نیست.
+        #
+        # رشد واقعی باید بعداً با مقایسه
+        # دوره مشابه سال قبل محاسبه شود.
+
+        sales_growth = None
+
+        profit_growth = None
+
+        # =========================
+        # Debt / Equity
+        # =========================
 
         debt_equity = (
 
-            liabilities / company.equity
+            liabilities /
+
+            company.equity
 
             if company.equity
 
@@ -59,9 +119,11 @@ class ReportGenerator:
 
         )
 
+        # =========================
+        # Industry
+        # =========================
 
         industry_section = ""
-
 
         if industry_rank:
 
@@ -77,9 +139,11 @@ Market Cap Rank:
 
 """
 
+        # =========================
+        # Report Information
+        # =========================
 
         period_section = ""
-
 
         if report_period:
 
@@ -87,15 +151,60 @@ Market Cap Rank:
 
 REPORT INFORMATION
 ------------------------------
-Report Period:
-{report_period.get("period")}
+Report Period End:
+{report_period_end}
+
+Fiscal Year End:
+{fiscal_year_end}
+
+Period Type:
+{period_type}
+
+Duration:
+{duration_months} months
+
+Annualization Factor:
+{annualization_factor}
 
 Forecast Method:
-{report_period.get("forecast_method")}
+{forecast_method}
+
+Growth Method:
+{growth_method}
 
 """
 
+        # =========================
+        # Growth Display
+        # =========================
 
+        sales_growth_display = (
+
+            f"{round(sales_growth, 2)} %"
+
+            if sales_growth is not None
+
+            else
+
+            "N/A"
+
+        )
+
+        profit_growth_display = (
+
+            f"{round(profit_growth, 2)} %"
+
+            if profit_growth is not None
+
+            else
+
+            "N/A"
+
+        )
+
+        # =========================
+        # Final Report
+        # =========================
 
         return f"""
 ==============================
@@ -115,26 +224,32 @@ Symbol:
 
 PERFORMANCE
 ------------------------------
-Current Sales:
+Current Period Sales:
 {company.sales}
 
-Forecast Sales:
+Annual Forecast Sales:
 {round(forecast_sales)}
 
-Sales Growth:
-{round(sales_growth,2)} %
+Comparable Sales Growth:
+{sales_growth_display}
+
+Growth Status:
+Comparable-period data not available
 
 
 PROFITABILITY
 ------------------------------
-Current Profit:
+Current Period Profit:
 {company.net_profit}
 
-Forecast Profit:
+Annual Forecast Profit:
 {round(forecast_profit)}
 
-Profit Growth:
-{round(profit_growth,2)} %
+Comparable Profit Growth:
+{profit_growth_display}
+
+Growth Status:
+Comparable-period data not available
 
 Net Margin:
 {round((company.net_profit/company.sales)*100,2) if company.sales else 0} %
@@ -198,6 +313,11 @@ Profit Quality:
 
 Valuation:
 Forward P/E = {valuation["PE"]}
+
+Growth Analysis:
+Comparable-period growth requires
+the same financial period from the
+previous fiscal year.
 
 ==============================
 """

@@ -6,40 +6,70 @@ class FinalAnalyzer:
         forecast_sales,
         forecast_profit,
         profit_quality,
-        valuation
+        valuation,
+        period_type=None,
+        duration_months=None,
+        annualization_factor=None
     ):
 
         self.company = company
+
         self.forecast_sales = forecast_sales
+
         self.forecast_profit = forecast_profit
+
         self.profit_quality = profit_quality
+
         self.valuation = valuation
 
+        self.period_type = period_type
 
-    def growth_rate(self, current, forecast):
+        self.duration_months = duration_months
 
-        if current == 0:
-            return 0
-
-        return round(
-            ((forecast - current) / current) * 100,
-            2
+        self.annualization_factor = (
+            annualization_factor
         )
+
+
+    def growth_rate(
+        self,
+        current,
+        forecast
+    ):
+
+        # Forecast سالانه‌شده، رشد قابل مقایسه
+        # با دوره جاری نیست.
+        #
+        # بنابراین این متد دیگر برای محاسبه
+        # رشد Current -> Forecast استفاده نمی‌شود.
+
+        return None
 
 
     def debt_to_equity(self):
 
         if self.company.equity == 0:
+
             return 0
 
         liabilities = (
-            self.company.assets -
+
+            self.company.assets
+
+            -
+
             self.company.equity
+
         )
 
         return round(
-            liabilities / self.company.equity,
+
+            liabilities /
+
+            self.company.equity,
+
             2
+
         )
 
 
@@ -64,9 +94,11 @@ class FinalAnalyzer:
 
         return {
 
-            "company": self.company.name,
+            "company":
+                self.company.name,
 
-            "symbol": self.company.symbol,
+            "symbol":
+                self.company.symbol,
 
 
             "performance": {
@@ -79,11 +111,15 @@ class FinalAnalyzer:
                         self.forecast_sales
                     ),
 
+                # رشد قابل مقایسه هنوز
+                # از دوره مشابه سال قبل
+                # استخراج نشده است.
+
                 "sales_growth":
-                    self.growth_rate(
-                        self.company.sales,
-                        self.forecast_sales
-                    )
+                    None,
+
+                "sales_growth_status":
+                    "Comparable period data not available"
 
             },
 
@@ -98,22 +134,54 @@ class FinalAnalyzer:
                         self.forecast_profit
                     ),
 
+                # رشد قابل مقایسه هنوز
+                # از دوره مشابه سال قبل
+                # استخراج نشده است.
+
                 "profit_growth":
-                    self.growth_rate(
-                        self.company.net_profit,
-                        self.forecast_profit
-                    ),
+                    None,
+
+                "profit_growth_status":
+                    "Comparable period data not available",
 
                 "net_margin":
                     round(
+
                         (
-                            self.company.net_profit /
+
+                            self.company.net_profit
+
+                            /
+
                             self.company.sales
-                        ) * 100,
+
+                        )
+
+                        *
+
+                        100,
+
                         2
+
                     )
+
                     if self.company.sales
+
                     else 0
+
+            },
+
+
+            "financial_period": {
+
+                "period_type":
+                    self.period_type,
+
+                "duration_months":
+                    self.duration_months,
+
+                "annualization_factor":
+                    self.annualization_factor
 
             },
 
@@ -128,8 +196,13 @@ class FinalAnalyzer:
 
                 "liabilities":
                     (
-                        self.company.assets -
+
+                        self.company.assets
+
+                        -
+
                         self.company.equity
+
                     ),
 
                 "status":

@@ -1,174 +1,612 @@
-from codal.codal_profit_loss_parser import CodalProfitLossParser
+from models.company import Company
+
+from tsetmc.tsetmc_adapter import TSETMCAdapter
+from tsetmc.tsetmc_market import MarketData
+from tsetmc.symbol_resolver import SymbolResolver
+
+from codal.codal_report_service import CodalReportService
+from codal.sheet_loader import CodalSheetLoader
+from codal.sheet_selector import SheetSelector
+from codal.financial_adapter import FinancialAdapter
+from codal.balance_sheet_parser import BalanceSheetParser
+from codal.report_selector import ReportSelector
+from codal.codal_adapter import CodalAdapter
+
+from valuation.valuation_model import calculate_valuation
+
+from analysis.profit_quality import ProfitQualityAnalyzer
+from analysis.final_analyzer import FinalAnalyzer
+from analysis.report_generator import ReportGenerator
 
 
-class FinancialAdapter:
+class AnalyzerEngine:
 
+    def __init__(self, symbol):
 
-    def __init__(self, url):
+        self.symbol = symbol
 
-        self.url = url
+    def run(self):
 
+        # =========================
+        # Symbol Resolver
+        # =========================
 
+        resolver = SymbolResolver()
 
-    def report(self):
-
-        parser = CodalProfitLossParser(
-            self.url
+        ins_code = resolver.find_ins_code(
+            self.symbol
         )
 
+        if not ins_code:
 
-        data = parser.get_financial_data()
+            raise ValueError(
+                "Symbol not found"
+            )
 
+        # =========================
+        # Market Data
+        # =========================
 
+        api = TSETMCAdapter()
 
-        sales = self.extract_value(
-            data.get(
-                "sales",
-                []
+        closing = api.get_closing_price(
+            ins_code
+        )
+
+        info = api.get_instrument_info(
+            ins_code
+        )
+
+        market = MarketData(
+            closing,
+            info
+        )
+
+        live = market.report()
+
+        company_name = (
+
+            api.get_company_name(info)
+
+            or
+
+            self.symbol
+
+        )
+
+        # =========================
+        # Codal Report Selection
+        # =========================
+
+        codal_service = CodalReportService(
+            self.symbol
+        )
+
+        codal_report = (
+            codal_service
+            .get_latest_financial_report()
+        )
+
+        if not codal_report:
+
+            raise ValueError(
+                "No financial report selected"
+            )
+
+        report_url = codal_report.get(
+            "url"
+        )
+
+        if not report_url:
+
+            raise ValueError(
+                "Report URL not found"
+            )
+
+        # =========================
+        # Comparable Period Selection
+        # =========================
+
+        codal_adapter = CodalAdapter(
+            self.symbol
+        )
+
+        financial_reports = (
+            codal_adapter.find_financial_reports()
+        )
+
+        monthly_reports = (
+            codal_adapter.find_monthly_reports()
+        )
+
+        report_selector = ReportSelector(
+
+            financial_reports,
+
+            monthly_reports
+
+        )
+
+        comparable_report = (
+            report_selector
+            .find_comparable_period(
+                codal_report
             )
         )
 
+        comparable_url = None
 
-        gross_profit = self.extract_value(
-            data.get(
-                "gross_profit",
-                []
+        if comparable_report:
+
+            comparable_url = (
+                comparable_report.get(
+                    "url"
+                )
             )
+
+            if comparable_url:
+
+                if not comparable_url.startswith(
+                    "http"
+                ):
+
+                    comparable_url = (
+                        "https://codal.ir"
+                        +
+                        comparable_url
+                    )
+
+        # =========================
+        # Sheet Selection
+        # =========================
+
+        loader = CodalSheetLoader(
+            report_url
         )
 
+        sheets = loader.get_sheet_options()
 
-        operating_profit = self.extract_value(
-            data.get(
+        selector = SheetSelector(
+            sheets
+        )
+
+        selected = selector.report()
+
+        income_sheet = selected.get(
+            "income_statement"
+        )
+
+        balance_sheet = selected.get(
+            "balance_sheet"
+        )
+
+        if not income_sheet:
+
+            raise ValueError(
+                "Income statement sheet not found"
+            )
+
+        if not balance_sheet:
+
+            raise ValueError(
+                "Balance sheet sheet not found"
+            )
+
+        income_url = income_sheet.get(
+            "url"
+        )
+
+        balance_url = balance_sheet.get(
+            "url"
+        )
+
+        if not income_url:
+
+            raise ValueError(
+                "Income statement URL not found"
+            )
+
+        if not balance_url:
+
+            raise ValueError(
+                "Balance sheet URL not found"
+            )
+
+        # =========================
+        # Canonical Financial Layer
+        # =========================
+
+        financial = FinancialAdapter(
+
+            income_url,
+
+            comparable_url
+
+        )
+
+        financial_report = (
+            financial.report()
+        )
+
+        sales = financial_report.get(
+            "sales",
+            0
+        )
+
+        operating_profit = (
+            financial_report.get(
                 "operating_profit",
-                []
+                0
             )
         )
 
-
-        non_operating_income = self.extract_value(
-            data.get(
-                "non_operating_income",
-                []
-            )
-        )
-
-
-        net_profit = self.extract_value(
-            data.get(
+        net_profit = (
+            financial_report.get(
                 "net_profit",
-                []
+                0
             )
         )
 
+        non_operating_income = (
+            financial_report.get(
+                "non_operating_income",
+                0
+            )
+        )
 
-        # اگر سود عملیاتی مستقیم در گزارش نبود
-        # تخمین محافظه کارانه از سود خالص و غیرعملیاتی
+        report_period_end = (
+            financial_report.get(
+                "report_period_end"
+            )
+        )
 
-        if operating_profit == 0 and net_profit > 0:
+        fiscal_year_end = (
+            financial_report.get(
+                "fiscal_year_end"
+            )
+        )
 
-            operating_profit = (
-                net_profit -
+        duration_months = (
+            financial_report.get(
+                "duration_months"
+            )
+        )
+
+        period_type = (
+            financial_report.get(
+                "period_type"
+            )
+        )
+
+        # =========================
+        # Comparable Growth
+        # =========================
+
+        comparable = (
+            financial_report.get(
+                "comparable",
+                {}
+            )
+        )
+
+        growth = (
+            financial_report.get(
+                "growth",
+                {}
+            )
+        )
+
+        # =========================
+        # Balance Sheet
+        # =========================
+
+        balance_parser = BalanceSheetParser(
+            balance_url
+        )
+
+        balance = (
+            balance_parser
+            .get_balance_data()
+        )
+
+        assets = balance.get(
+            "assets",
+            0
+        )
+
+        equity = balance.get(
+            "equity",
+            0
+        )
+
+        liabilities = balance.get(
+            "liabilities",
+            0
+        )
+
+        # =========================
+        # Company Domain Model
+        # =========================
+
+        company = Company(
+
+            name=company_name,
+
+            symbol=self.symbol,
+
+            sales=sales,
+
+            operating_profit=operating_profit,
+
+            net_profit=net_profit,
+
+            assets=assets,
+
+            equity=equity,
+
+            market_cap=live[
+                "market_cap"
+            ],
+
+            non_operating_income=(
                 non_operating_income
             )
 
+        )
 
+        # =========================
+        # Financial Period Validation
+        # =========================
+
+        if duration_months is None:
+
+            raise ValueError(
+
+                "Financial period duration "
+                "could not be determined from "
+                "Codal report metadata"
+
+            )
+
+        if period_type is None:
+
+            raise ValueError(
+
+                "Financial period type "
+                "could not be determined"
+
+            )
+
+        # =========================
+        # Forecast
+        # =========================
+
+        annualization_factor = (
+
+            12 /
+
+            duration_months
+
+        )
+
+        forecast_sales = (
+
+            company.sales
+
+            *
+
+            annualization_factor
+
+        )
+
+        margin = (
+
+            company.net_profit /
+
+            company.sales
+
+            if company.sales
+
+            else 0
+
+        )
+
+        forecast_profit = (
+
+            forecast_sales
+
+            *
+
+            margin
+
+        )
+
+        # =========================
+        # Profit Quality
+        # =========================
+
+        profit_quality = (
+
+            ProfitQualityAnalyzer(
+
+                company.operating_profit,
+
+                company.net_profit,
+
+                company.non_operating_income
+
+            ).analyze()
+
+        )
+
+        # =========================
+        # Valuation
+        # =========================
+
+        valuation = calculate_valuation(
+
+            market_cap=company.market_cap,
+
+            forecast_sales=(
+
+                forecast_sales /
+
+                10000
+
+            ),
+
+            forecast_profit=(
+
+                forecast_profit /
+
+                10000
+
+            ),
+
+            equity=company.equity,
+
+            assets=company.assets,
+
+            dividend=11570
+
+        )
+
+        # =========================
+        # Final Analysis
+        # =========================
+
+        final = FinalAnalyzer(
+
+            company,
+
+            forecast_sales,
+
+            forecast_profit,
+
+            profit_quality,
+
+            valuation,
+
+            growth
+
+        ).generate()
+
+        # =========================
+        # Report
+        # =========================
+
+        report = ReportGenerator().generate(
+
+            company,
+
+            forecast_sales,
+
+            forecast_profit,
+
+            profit_quality,
+
+            valuation,
+
+            liabilities,
+
+            (
+
+                "Healthy"
+
+                if balance.get(
+                    "balanced",
+                    False
+                )
+
+                else
+
+                "Warning"
+
+            ),
+
+            report_period={
+
+                "period":
+                    report_period_end,
+
+                "fiscal_year_end":
+                    fiscal_year_end,
+
+                "period_type":
+                    period_type,
+
+                "duration_months":
+                    duration_months,
+
+                "annualization_factor":
+                    annualization_factor,
+
+                "forecast_method":
+                    (
+                        "Annualized from "
+                        +
+                        period_type
+                        +
+                        " current period"
+                    ),
+
+                "growth_method":
+                    (
+                        "Comparable-period growth"
+                        if growth.get(
+                            "available",
+                            False
+                        )
+                        else
+                        "Comparable-period growth "
+                        "not available"
+                    ),
+
+                "comparable_period":
+                    comparable.get(
+                        "report_period_end"
+                    )
+                    if comparable
+                    else None
+
+            }
+
+        )
 
         return {
 
-            "sales":
-                sales,
+            "company":
+                company,
 
+            "analysis":
+                final,
 
-            "gross_profit":
-                gross_profit,
+            "report":
+                report,
 
+            "financial_period": {
 
-            "operating_profit":
-                operating_profit,
+                "report_period_end":
+                    report_period_end,
 
+                "fiscal_year_end":
+                    fiscal_year_end,
 
-            "non_operating_income":
-                non_operating_income,
+                "duration_months":
+                    duration_months,
 
+                "period_type":
+                    period_type,
 
-            "net_profit":
-                net_profit
+                "annualization_factor":
+                    annualization_factor
+
+            },
+
+            "comparable_period":
+                comparable,
+
+            "growth":
+                growth
 
         }
-
-
-
-
-    def extract_value(
-        self,
-        rows
-    ):
-
-
-        if not rows:
-
-            return 0
-
-
-
-        for row in rows:
-
-
-            address = row.get(
-                "address",
-                ""
-            )
-
-
-            if address.startswith(
-                "B"
-            ):
-
-
-                value = row.get(
-                    "value",
-                    0
-                )
-
-
-                try:
-
-                    return int(
-                        value
-                    )
-
-                except (
-                    ValueError,
-                    TypeError
-                ):
-
-                    pass
-
-
-
-        for row in rows:
-
-
-            value = row.get(
-                "value",
-                0
-            )
-
-
-            try:
-
-                return int(
-                    value
-                )
-
-
-            except (
-                ValueError,
-                TypeError
-            ):
-
-                continue
-
-
-
-        return 0
