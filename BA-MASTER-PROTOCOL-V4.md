@@ -1,714 +1,513 @@
-# BOURSEANALYZER MASTER PROTOCOL V4
-
-## Project Governance, Architecture, Continuity, Coding, Testing and Control Standard
+# BourseAnalyzer — Master Protocol V4
 
 **Project:** BourseAnalyzer  
-**Protocol ID:** BA-MASTER-PROTOCOL-V4  
-**Protocol Version:** V4  
-**Status:** FINAL  
-**Authority:** Project Master Governance Document  
-**Repository:** BourseAnalyzer  
-**Primary Branch:** Must always be determined from actual Git state  
-**Last Updated:** 2026-07-26  
+**Protocol:** BA-MASTER-PROTOCOL-V4  
+**Protocol Status:** FINAL / OPERATIONAL  
+**Document Type:** Master Project Governance, Architecture, Continuity and Coding Protocol  
+**Repository:** `mamaljigar-prog/BourseAnalyzer`
 
 ---
 
-# 0. PURPOSE OF THIS PROTOCOL
+# 0. PURPOSE
 
-این سند، اساسنامه و پروتکل مادر پروژه BourseAnalyzer است.
+This document defines the permanent operating rules for the BourseAnalyzer project.
 
-هدف این پروتکل جلوگیری از موارد زیر است:
+The purpose of this protocol is to ensure that the project:
 
-- گم شدن مسیر پروژه
-- شروع مجدد غیرضروری پروژه
-- تکرار Audit بدون دلیل
-- فراموش شدن تصمیم‌های معماری
-- ایجاد کدهای موازی و تکراری
-- ایجاد ماژول‌های هم‌وظیفه
-- باقی ماندن Hard-Codeهای غیرضروری
-- پخش شدن Logic در چند فایل
-- افزایش بی‌دلیل پیچیدگی
-- تغییر معماری بدون بررسی Dependency Flow
-- خروج پروژه از Scope
-- اضافه شدن قابلیت‌های جدید قبل از تثبیت معماری
-- از بین رفتن ارتباط بین Checkpointها
-- وابستگی بیش از حد به حافظه مکالمه
-- نیاز کاربر به توضیح دوباره وضعیت پروژه
-- ادامه دادن یک Task از نقطه اشتباه
-- تصور موفقیت تست بدون دریافت نتیجه واقعی
-- حذف یا تغییر Legacy بدون تصمیم آگاهانه
-- ایجاد Technical Debt جدید هنگام رفع Technical Debt قدیمی
+- Does not lose direction during long conversations.
+- Does not restart completed work unnecessarily.
+- Does not repeat audits without evidence.
+- Does not introduce uncontrolled architecture changes.
+- Does not accumulate unnecessary duplicate code.
+- Does not create parallel implementations for the same responsibility.
+- Does not spread hard-coded business rules throughout the codebase.
+- Does not allow Legacy code to be confused with Active code.
+- Does not expand scope without explicit authorization.
+- Can be resumed reliably after a long conversation.
+- Can be resumed from a new chat.
+- Can be recovered even if conversational memory is incomplete.
+- Maintains a clear distinction between project rules, project state, architecture and code.
+- Uses the actual GitHub repository as the source of truth for the actual implementation.
 
-این سند باید به‌عنوان مرجع اصلی کنترل پروژه مورد استفاده قرار گیرد.
-
----
-
-# 1. GOLDEN RULE
-
-قانون طلایی پروژه:
-
-> هیچ کاری در BourseAnalyzer نباید صرفاً به دلیل اینکه «ممکن است مفید باشد» انجام شود.
-
-هر تغییر باید:
-
-1. با Scope فعلی سازگار باشد.
-2. با معماری Active سازگار باشد.
-3. در Roadmap جای مشخص داشته باشد.
-4. دلیل فنی یا محصولی مشخص داشته باشد.
-5. از ایجاد پیچیدگی غیرضروری جلوگیری کند.
-6. قابل تست باشد.
-7. وضعیت آن در Checkpoint ثبت شود.
-
-اگر کاری خارج از Scope فعلی است:
-
-- انجام نشود.
-- وارد معماری نشود.
-- به‌عنوان قابلیت جدید معرفی نشود.
-- فقط در صورت نیاز به‌عنوان Future Scope ثبت شود.
-
----
-
-# 2. PRIMARY CONTINUATION COMMAND
-
-دستور استاندارد ادامه پروژه:
-
-> ادامه BourseAnalyzer از آخرین Checkpoint
-
-این دستور به معنی ادامه دادن پروژه از آخرین وضعیت معتبر است.
-
-در پاسخ به این دستور، دستیار نباید پروژه را از ابتدا شروع کند.
-
-فرآیند ادامه:
-
-1. آخرین Checkpoint معتبر را پیدا کند.
-2. وضعیت واقعی Repository را بررسی کند.
-3. Branch فعلی را بررسی کند.
-4. آخرین Commit را بررسی کند.
-5. وضعیت Git را بررسی کند.
-6. فایل‌های Project Control را بررسی کند.
-7. Active Architecture را بررسی کند.
-8. Legacy / Archive را بررسی کند.
-9. آخرین Task تکمیل‌شده را مشخص کند.
-10. Task در حال اجرا را مشخص کند.
-11. Task بعدی ثبت‌شده را بررسی کند.
-12. اگر Task قبلی هنوز کامل نشده، همان Task ادامه پیدا کند.
-13. اگر Task کامل شده، نتیجه آن Verify شود.
-14. سپس فقط یک Next Step قطعی انتخاب شود.
-
----
-
-# 3. NO-RESTART RULE
-
-پروژه نباید بدون دلیل از ابتدا شروع شود.
-
-موارد زیر به‌تنهایی دلیل کافی برای شروع دوباره نیستند:
-
-- باز شدن چت جدید
-- طولانی شدن چت قبلی
-- فراموش شدن بخشی از Context
-- تغییر مدل
-- تغییر Session
-- عدم دسترسی فوری به حافظه مکالمه
-- وجود کد Legacy
-- وجود چند فایل مشابه
-- وجود Technical Debt
-
-در این شرایط ابتدا باید:
-
-1. GitHub بررسی شود.
-2. Project Control بررسی شود.
-3. Checkpoint بررسی شود.
-4. Architecture Map بررسی شود.
-5. Roadmap بررسی شود.
-6. Git History بررسی شود.
-
-فقط در صورت عدم امکان بازیابی وضعیت واقعی، Recovery Procedure اجرا شود.
-
----
-
-# 4. RECOVERY RULE
-
-اگر آخرین Checkpoint در Context مکالمه موجود نباشد:
-
-نباید حدس زده شود.
-
-باید وضعیت واقعی پروژه از منابع قابل اعتماد بازیابی شود.
-
-ترتیب بازیابی:
-
-1. GitHub Repository
-2. Current Branch
-3. Latest Commit
-4. Git History
-5. Project Control Documents
-6. Roadmap
-7. Architecture Documentation
-8. Repository Structure
-9. Active Entry Point
-10. Active Dependency Flow
-11. Tests
-12. Latest Runtime Evidence
-
-اگر وضعیت دقیق قابل تشخیص نباشد:
-
-یک Recovery Checkpoint ساخته شود.
-
-عنوان:
-
-> RECOVERY CHECKPOINT
-
-و در آن موارد نامشخص صریحاً نوشته شود.
-
-هرگز وضعیت نامعلوم به‌صورت قطعی گزارش نشود.
-
----
-
-# 5. GITHUB FIRST PRINCIPLE
-
-GitHub منبع اصلی بررسی وضعیت واقعی Repository است، زمانی که دسترسی به Repository وجود دارد.
-
-قبل از هر تصمیم مهم، باید وضعیت واقعی Repository بررسی شود.
-
-موارد ضروری:
-
-- Repository URL
-- Current Branch
-- Latest Commit
-- Commit Date
-- Working Tree State در صورت دسترسی
-- Recent Commits
-- Open Pull Requests
-- Open Issues در صورت مرتبط بودن
-- GitHub Actions / Checks
-- Project Control Documents
-- Architecture Documents
-- Roadmap
-- Current Source Tree
-
-اگر GitHub در دسترس است:
-
-نباید از کاربر خواسته شود کل پروژه را دوباره Copy/Paste کند، مگر اینکه:
-
-- فایل موردنظر در Repository موجود نباشد.
-- Branch محلی با GitHub متفاوت باشد.
-- تغییرات Local هنوز Push نشده باشند.
-- فایل موردنظر در وضعیت Git ثبت نشده باشد.
-- Permission یا دسترسی Repository مانع بررسی باشد.
-
----
-
-# 6. GITHUB CONTINUITY PRINCIPLE
-
-هر تغییر مهم پروژه باید تا حد امکان در Git ثبت شود.
-
-هدف:
-
-GitHub باید بتواند وضعیت پروژه را حتی در صورت از دست رفتن Context مکالمه بازسازی کند.
-
-برای این منظور Repository باید شامل Control Documents باشد.
-
-حداقل اسناد پیشنهادی:
+This protocol must be used together with:
 
 ```text
-BA-MASTER-PROTOCOL-V4.md
-PROJECT-CONTROL.md
-PROJECT-ROADMAP.md
-ARCHITECTURE.md
-ACTIVE-ARCHITECTURE.md
-LEGACY-MAP.md
-DECISIONS.md
-CHECKPOINTS.md
-CURRENT-STATE.md
+PROJECT_CONTROL.md
+BA-CHECKPOINT.md
+BA-ROADMAP.md
+BA-ARCHITECTURE.md
 
-نام فایل‌ها می‌تواند در صورت وجود ساختار متفاوت تغییر کند، اما نقش آن‌ها باید حفظ شود.
+These documents have different responsibilities.
 
-7. SINGLE SOURCE OF TRUTH
+1. DOCUMENT AUTHORITY MODEL
 
-برای هر نوع اطلاعات فقط یک منبع اصلی وجود داشته باشد.
+The project uses the following authority hierarchy.
 
-نمونه:
+1.1 Actual Repository Code
 
-Project Governance
-→ BA-MASTER-PROTOCOL-V4.md
+The actual repository is the source of truth for:
 
-Current State
-→ CURRENT-STATE.md
+What code exists.
+What files exist.
+What imports exist.
+What code is executable.
+What branch contains the code.
+What commit contains the code.
+What implementation is actually active.
 
-Roadmap
-→ PROJECT-ROADMAP.md
+Documentation must never be assumed to be more accurate than verified code.
 
-Architecture
-→ ARCHITECTURE.md
+1.2 PROJECT_CONTROL.md
 
-Active Architecture
-→ ACTIVE-ARCHITECTURE.md
+PROJECT_CONTROL.md is the source of truth for the current operational state.
 
-Legacy
-→ LEGACY-MAP.md
+It controls:
 
-Architectural Decisions
-→ DECISIONS.md
+Current Task.
+Task Status.
+Task Lock.
+Scope Lock.
+Current Priority.
+Current operational phase.
+Current blockers.
+Current completion criteria.
+Current next step.
+1.3 BA-CHECKPOINT.md
 
-Checkpoint History
-→ CHECKPOINTS.md
+BA-CHECKPOINT.md is the source of truth for the latest verified continuation point.
 
-نباید یک تصمیم مهم در چند فایل با نسخه‌های متفاوت ثبت شود.
+It records:
 
-اگر تعارض وجود داشت:
+What was completed.
+What changed.
+What was tested.
+What failed.
+What remains.
+Where the project must continue.
+1.4 BA-ROADMAP.md
 
-Git state واقعی
-Current State
-Latest Checkpoint
-Architecture
-Roadmap
-سایر اسناد
+BA-ROADMAP.md defines the long-term project sequence.
 
-بررسی شوند.
+It must not be changed merely because a new idea appears during implementation.
 
-در صورت تعارض، وضعیت واقعی Repository بر متن قدیمی ترجیح دارد.
+1.5 BA-ARCHITECTURE.md
 
-8. MASTER PROTOCOL AUTHORITY
+BA-ARCHITECTURE.md defines the intended and verified architecture.
 
-این سند قوانین سطح بالای پروژه را تعریف می‌کند.
+It must distinguish:
 
-اما این سند نباید جایگزین وضعیت واقعی پروژه شود.
+CURRENT ACTIVE ARCHITECTURE
 
-یعنی:
+from:
 
-Master Protocol
-→ قوانین و اصول
+LEGACY / ARCHIVE
+1.6 BA-MASTER-PROTOCOL-V4.md
 
-Project Control
-→ وضعیت و کنترل
+This document defines permanent rules.
 
-Roadmap
-→ مسیر
+It defines:
 
-Architecture
-→ ساختار
+How the project must be handled.
+How tasks must be continued.
+How architecture changes are controlled.
+How code changes are made.
+How testing is handled.
+How continuity is preserved.
 
-Checkpoint
-→ نقطه زمانی پروژه
+This document does not replace the current project state.
 
-GitHub
-→ وضعیت واقعی کد
+2. PRIMARY CONTINUATION COMMAND
 
-هیچ‌کدام نباید نقش دیگری را بدون دلیل بر عهده بگیرند.
+The standard project continuation command is:
 
-9. PROJECT SCOPE CONTROL
+ادامه BourseAnalyzer از آخرین Checkpoint
 
-Scope فعلی پروژه باید صریحاً مشخص باشد.
+When this command is received, the assistant must not immediately start coding.
 
-هر قابلیت جدید باید قبل از توسعه بررسی شود.
+The assistant must first:
 
-اگر قابلیت خارج از Scope فعلی است:
-
-STATUS: OUT OF SCOPE
-
-ثبت شود.
-
-نباید به‌صورت خودکار وارد توسعه شود.
-
-برای اضافه کردن قابلیت جدید:
-
-نیازمندی مشخص شود.
-تأثیر معماری بررسی شود.
-تأثیر Data Model بررسی شود.
-تأثیر Testing بررسی شود.
-تأثیر Performance بررسی شود.
-تأثیر Maintainability بررسی شود.
-جای آن در Roadmap مشخص شود.
-سپس اجازه توسعه داده شود.
-10. NO FEATURE CREEP RULE
-
-در هنگام رفع مشکل معماری یا کدنویسی:
-
-نباید قابلیت جدید اضافه شود.
-
-مثال:
-
-اگر Task:
-
-Refactor Financial Mapping
-
-است، نباید همزمان:
-
-UI جدید
-تحلیل تکنیکال
-Machine Learning
-Portfolio Optimization
-Web API
-Database Layer
-
-اضافه شود.
-
-مگر اینکه صراحتاً در Scope همان Task تعریف شده باشد.
-
-11. PROJECT PHASES
-
-پروژه باید به مراحل منطقی تقسیم شود.
-
-مراحل پیشنهادی:
-
-PHASE 0
-Project Governance
-
-PHASE 1
-Repository Audit
-
-PHASE 2
-Architecture Discovery
-
-PHASE 3
-Active / Legacy Separation
-
-PHASE 4
-Canonical Data Layer
-
-PHASE 5
-Domain Model Stabilization
-
-PHASE 6
-Forecast Engine Stabilization
-
-PHASE 7
-Analysis Engine
-
-PHASE 8
-Valuation Engine
-
-PHASE 9
-Risk Analysis
-
-PHASE 10
-Reporting Pipeline
-
-PHASE 11
-Testing and Validation
-
-PHASE 12
-Production Hardening
-
-هیچ Phase نباید صرفاً به دلیل زمان یا فشار کاری رد شود.
-
-12. CURRENT PHASE IDENTIFICATION
-
-در هر لحظه باید دقیقاً مشخص باشد:
-
-CURRENT PHASE
-CURRENT TASK
-LAST COMPLETED TASK
-NEXT TASK
-BLOCKER
-
-اگر این اطلاعات مشخص نیست:
-
-نباید حدس زده شود.
-
-ابتدا وضعیت بررسی شود.
-
-13. TASK CONTINUITY
-
-هر Task باید دارای:
-
-Task ID
-عنوان
-هدف
-Scope
-فایل‌های مرتبط
-پیش‌نیازها
-معیار تکمیل
-تست
-وضعیت
-
-باشد.
-
-وضعیت:
+Read PROJECT_CONTROL.md.
+Read BA-CHECKPOINT.md.
+Read BA-MASTER-PROTOCOL-V4.md.
+If necessary, read BA-ARCHITECTURE.md.
+If necessary, read BA-ROADMAP.md.
+Verify the current Git branch.
+Verify the latest commit.
+Inspect the latest relevant repository changes.
+Compare documentation with the actual repository.
+Identify the current Task.
+Identify the Task Status.
+Determine whether a Task Lock is active.
+Determine the last completed action.
+Determine the exact unfinished action.
+Determine the single next priority step.
+
+Only after this verification may the assistant continue the project.
+
+3. NO-RESTART RULE
+
+The assistant must not restart the project from the beginning merely because:
+
+The conversation became long.
+The chat changed.
+Some previous context is unavailable.
+The project has many files.
+The assistant does not immediately remember every detail.
+
+The assistant must first attempt recovery from:
+
+GitHub Repository
+        ↓
+Current Branch
+        ↓
+Latest Commit
+        ↓
+PROJECT_CONTROL.md
+        ↓
+BA-CHECKPOINT.md
+        ↓
+BA-ARCHITECTURE.md
+        ↓
+BA-ROADMAP.md
+
+Only if the state cannot be reconstructed should a Recovery Checkpoint be created.
+
+4. NO-GUESS RULE
+
+The assistant must never guess the project state.
+
+The assistant must not fabricate:
+
+Current branch.
+Latest commit.
+Current task.
+Task completion.
+Test results.
+Architecture.
+File existence.
+Active implementation.
+Legacy implementation.
+GitHub synchronization status.
+
+If the state is unclear:
+
+STOP
+VERIFY
+REPORT
+
+Then continue only after the state is established.
+
+5. TASK LOCK
+
+Every active project task must have:
+
+TASK ID
+TASK NAME
+TASK STATUS
+TASK OBJECTIVE
+TASK SCOPE
+COMPLETION CRITERIA
+START CHECKPOINT
+NEXT STEP
+PRIORITY
+
+Allowed Task Status values:
 
 PLANNED
 IN PROGRESS
+WAITING_FOR_USER
 BLOCKED
-WAITING FOR USER
-TESTING
+PAUSED
 COMPLETED
-ABANDONED
-14. RUNNING APP REQUEST RULE
+CANCELLED
 
-اگر کاربر اعلام کند:
+If:
 
-Running app request
+TASK STATUS = IN PROGRESS
 
-ابتدا باید بررسی شود که این عبارت مربوط به کدام Task فعال است.
+a Task Lock is active.
 
-اگر مربوط به Task فعال باشد:
+While Task Lock is active:
 
-همان Task ادامه پیدا کند.
+Do not start unrelated tasks.
+Do not restart completed audits.
+Do not introduce new features.
+Do not change architecture unnecessarily.
+Do not expand Scope.
+Do not switch to another module without technical justification.
+Do not abandon the current Task silently.
+6. TASK CONTINUITY LOCK
 
-Audit دوباره شروع نشود.
+If the project state says:
 
-اگر Task قابل تشخیص نباشد:
+CURRENT TASK = X
+STATUS = IN PROGRESS
 
-ابتدا وضعیت گزارش شود.
+then the assistant must continue Task X.
 
-حدس ممنوع است.
+The assistant must not interpret a long conversation as permission to change the Task.
 
-15. AUDIT RULE
+The assistant must not:
 
-Audit فقط زمانی دوباره اجرا شود که:
+Restart Audit.
+Start a new Refactor.
+Start a new Feature.
+Rebuild architecture.
+Reanalyze the entire repository from zero.
 
-Scope Audit جدید تعریف شده باشد.
-Repository تغییر اساسی کرده باشد.
-Branch تغییر کرده باشد.
-معماری تغییر کرده باشد.
-Checkpoint معتبر وجود نداشته باشد.
-وضعیت واقعی قابل بازیابی نباشد.
+unless:
 
-در غیر این صورت:
+The current Task is completed.
+The current Task is blocked.
+The user explicitly changes the Task.
+A critical technical defect requires interruption.
 
-Audit تکراری ممنوع است.
+If the current Task is interrupted:
 
-16. REPOSITORY AUDIT SCOPE
+STATUS = PAUSED
 
-Audit کامل باید موارد زیر را بررسی کند:
+must be recorded.
 
-Repository Structure
-Entry Points
-Imports
-Dependency Graph
-Active Flow
-Dead Code
-Duplicate Code
-Duplicate Responsibilities
-Hard-Coded Values
-Configuration
-Environment Variables
-Error Handling
-Logging
-Data Models
-External Adapters
-Parsers
-Financial Mapping
-Forecasting
-Analysis
-Valuation
-Reporting
-Tests
-Legacy Files
-Unused Files
-Circular Dependencies
-Tight Coupling
-Hidden Side Effects
-Global State
-Technical Debt
-17. DUPLICATE CODE RULE
+The Task must remain recoverable.
 
-یکی از اولویت‌های اصلی Audit:
+7. TASK COMPLETION RULE
 
-شناسایی کدهای تکراری است.
+A Task is not completed merely because:
 
-تکرار ممکن است در:
+Code was written.
+A file was changed.
+The application started.
+A single command succeeded.
 
-چند فایل
-چند کلاس
-چند تابع
-چند ماژول
-چند Parser
-چند Adapter
-چند Engine
+A Task is completed only when its defined Completion Criteria have been verified.
 
-وجود داشته باشد.
+Every Task must define measurable Completion Criteria.
 
-اگر دو قطعه کد وظیفه یکسان دارند:
+8. ONE NEXT STEP RULE
 
-ابتدا مشخص شود:
+Every active Checkpoint must define exactly one:
 
-Which one is Active?
-Which one is Legacy?
-Which one is Canonical?
+NEXT STEP
 
-سپس:
+The assistant must not provide multiple competing directions as the primary continuation path.
 
-Active حفظ شود.
-Legacy علامت‌گذاری شود.
-پیاده‌سازی موازی جدید ایجاد نشود.
-18. DUPLICATE RESPONSIBILITY RULE
+If multiple possible tasks exist:
 
-تکرار فقط کد مشابه نیست.
+Evaluate priority.
+Select the most important one.
+Execute or assign only that one as the Next Step.
 
-اگر چند ماژول مسئولیت یکسان دارند، حتی اگر کد آن‌ها متفاوت باشد، Duplicate Responsibility محسوب می‌شود.
+The Next Step must specify:
 
-مثال:
+What changes.
+Which file/module is involved.
+Why it must change.
+How it will be tested.
+9. SCOPE LOCK
 
-financial_mapper.py
-financial_concept_mapper.py
-financial_mapping_engine.py
+The project Scope must remain stable unless the user explicitly changes it.
 
-اگر هر سه بخشی از Mapping یکسان را انجام دهند، باید مسئولیت آن‌ها تفکیک شود.
+The assistant must not introduce:
 
-اصل:
+New features.
+New analytical dimensions.
+New data sources.
+New architecture layers.
+New reports.
+New valuation models.
 
-هر مسئولیت اصلی باید یک Owner مشخص داشته باشد.
+merely because they appear useful.
 
-19. SINGLE RESPONSIBILITY
+Useful does not mean authorized.
 
-هر ماژول باید مسئولیت مشخص داشته باشد.
+Any proposed Scope change must be clearly identified as:
 
-مثال:
+OUT OF CURRENT SCOPE
 
-Adapter
-→ دریافت و تبدیل داده خارجی
+and must not be implemented without explicit authorization.
 
-Parser
-→ استخراج داده از ساختار خام
+10. NO-SCOPE-CREEP RULE
 
-Mapper
-→ تبدیل مفهوم داده به Canonical Concept
+The following behavior is prohibited:
 
-Domain Model
-→ نمایش داده استاندارد
+Fix one issue
+    ↓
+Add unrelated feature
+    ↓
+Refactor another module
+    ↓
+Change architecture
+    ↓
+Modify valuation
+    ↓
+Change output
 
-Forecast
-→ پیش‌بینی
+during a single unrelated task.
 
-Analysis
-→ تحلیل
+The assistant must maintain task boundaries.
 
-Valuation
-→ ارزش‌گذاری
+If an unrelated issue is discovered:
 
-Report
-→ نمایش نتیجه
+Record as Known Issue
 
-یک فایل نباید همزمان:
+and continue the current Task unless the issue blocks the current Task.
 
-Scraping
-Parsing
-Mapping
-Forecasting
-Valuation
-Printing
+11. ACTIVE VS LEGACY
 
-را انجام دهد.
-
-20. HARD-CODE AUDIT
-
-Hard-Codeهای باقی‌مانده باید شناسایی شوند.
-
-موارد مشکوک:
-
-Symbolهای ثابت
-URLهای ثابت
-Thresholdهای مالی
-PE ثابت
-نام شرکت
-مسیر فایل
-تاریخ
-مقادیر مالی
-Mappingهای ثابت
-Credentials
-API Keys
-Configuration
-
-اما همه Hard-Codeها بد نیستند.
-
-موارد ثابت واقعی می‌توانند Hard-Code باقی بمانند.
-
-مثال:
-
-Mathematical constants
-Protocol constants
-Enum values
-Immutable business rules
-
-اصل:
-
-Hard-Code فقط زمانی حذف شود که واقعاً Configuration یا Domain Rule است.
-
-21. CONFIGURATION RULE
-
-Configuration نباید در سراسر کد پخش شود.
-
-موارد قابل تنظیم باید در یک محل مشخص باشند.
-
-مثال:
-
-Base PE
-Forecast Horizon
-Risk Threshold
-Margin Threshold
-API Endpoint
-Timeout
-Retry Count
-
-اما Business Ruleهای اصلی نباید بدون دلیل به Configuration تبدیل شوند.
-
-22. SECRET MANAGEMENT
-
-هیچ Secret نباید داخل Repository ثبت شود.
-
-ممنوع:
-
-API Key
-Password
-Token
-Credential
-Private Key
-
-باید از:
-
-Environment Variables
-.env
-Secret Manager
-
-استفاده شود.
-
-فایل .env نباید Commit شود.
-
-23. ACTIVE VS LEGACY
-
-پروژه همیشه باید دو بخش داشته باشد:
+Every implementation must be classified as one of:
 
 ACTIVE
-LEGACY / ARCHIVE
+LEGACY
+ARCHIVE
+EXPERIMENTAL
+UNKNOWN
 
-Active:
+The project must never maintain ambiguity indefinitely.
 
-کدی که در مسیر اصلی اجرای پروژه استفاده می‌شود.
+If two modules appear to perform the same responsibility:
 
-Legacy:
+Search all references.
+Search all imports.
+Search runtime call paths.
+Identify which implementation is actually executed.
+Identify which implementation is historical.
+Record the classification.
+Modify only the Active implementation.
 
-کد قدیمی
-نسخه قبلی
-آزمایشی
-Deprecated
-Unused
+Legacy code must not be deleted without explicit user approval.
 
-Legacy نباید بدون دلیل حذف شود.
+12. DUPLICATE CODE CONTROL
 
-24. LEGACY RULE
+Before creating:
 
-Legacy نباید وارد Dependency Flow اصلی شود.
+A new function.
+A new class.
+A new parser.
+A new adapter.
+A new service.
+A new normalization layer.
+A new calculation.
+A new business-rule implementation.
 
-اگر Active به Legacy وابسته است:
+the assistant must search the repository for an existing implementation.
 
-این وضعیت باید به‌عنوان Technical Debt ثبت شود.
+The assistant must inspect:
 
-هدف:
+Similar function names.
+Similar classes.
+Similar formulas.
+Similar parsing.
+Similar API calls.
+Similar normalization.
+Similar validation.
+Similar business rules.
+Similar output generation.
 
-کاهش تدریجی وابستگی Active به Legacy.
+If the responsibility already exists:
 
-25. LEGACY DELETE RULE
+Reuse
+OR
+Extend
+OR
+Refactor
 
-حذف Legacy فقط زمانی انجام شود که:
+before creating a new implementation.
 
-استفاده نشدن آن اثبات شود.
-Dependency آن بررسی شود.
-جایگزین Active مشخص باشد.
-Rollback ممکن باشد.
-تصمیم در DECISIONS.md ثبت شود.
-26. ARCHITECTURE TARGET
+Creating multiple implementations of one responsibility is prohibited unless there is a documented architectural reason.
 
-معماری هدف:
+13. SINGLE RESPONSIBILITY CONTROL
+
+Each responsibility should have one canonical owner.
+
+Examples:
+
+Codal Retrieval
+Codal Report Selection
+Period Classification
+Financial Parsing
+Financial Normalization
+Forecasting
+Valuation
+Risk Analysis
+Report Generation
+
+Each must have a clearly identified owner.
+
+The same business rule must not be independently implemented in several modules.
+
+14. HARD-CODE CONTROL
+
+The assistant must identify and control:
+
+Magic numbers.
+Repeated strings.
+Repeated thresholds.
+Repeated business rules.
+Repeated external identifiers.
+Repeated report classification rules.
+Repeated valuation assumptions.
+Repeated financial constants.
+
+Before adding a hard-coded value:
+
+Search the repository.
+Determine whether it already exists.
+Determine whether it is a configuration value.
+Determine whether it is a domain constant.
+Determine whether it belongs in a model.
+Determine whether it belongs in a dedicated configuration layer.
+
+Existing hard-coded values must not be refactored blindly during unrelated tasks.
+
+15. MAGIC NUMBER RULE
+
+A numeric value must not be considered a magic number automatically.
+
+Determine whether it is:
+
+Domain Constant
+Configuration
+Business Rule
+Threshold
+Temporary Debug Value
+Accidental Hard-Code
+
+Examples requiring architectural review:
+
+PE = 7
+
+or:
+
+Three consecutive declining months
+
+or:
+
+Financial thresholds
+
+These values must have an explicit business meaning.
+
+16. ARCHITECTURE-FIRST RULE
+
+Before major architectural changes, determine:
+
+Entry Point.
+Dependency Flow.
+Data Flow.
+External Data Sources.
+Adapter Layer.
+Parser Layer.
+Canonical Domain Models.
+Forecast Layer.
+Analysis Layer.
+Valuation Layer.
+Risk Layer.
+Report Layer.
+
+No major architecture rewrite may be performed based only on assumptions.
+
+17. TARGET ARCHITECTURE
+
+The target architecture is:
 
 Raw External Data
         ↓
@@ -716,7 +515,9 @@ Adapters / Parsers
         ↓
 Canonical Domain Models
         ↓
-Forecast / Normalization
+Normalization
+        ↓
+Forecast
         ↓
 Analysis
         ↓
@@ -725,2247 +526,1214 @@ Valuation
 Risk Analysis
         ↓
 Final Report
-27. DATA FLOW
 
-جریان داده باید قابل ردیابی باشد.
+The architecture should remain modular.
 
-از:
+18. MARKET DATA CANONICALIZATION
 
-External Source
+Market data flow:
 
-تا:
-
-Final Report
-
-نباید داده به‌صورت مخفی یا غیرقابل پیش‌بینی عبور کند.
-
-28. TSETMC DATA FLOW
 Raw TSETMC
-    ↓
+        ↓
 TSETMC Adapter
-    ↓
+        ↓
 CompanyIdentity
-    ↓
+        ↓
 MarketSnapshot
-    ↓
-Company Domain
-29. CODAL DATA FLOW
+
+TSETMC data may include:
+
+Symbol.
+Company Name.
+Instrument Code.
+Last Price.
+Closing Price.
+Shares.
+Market Value.
+
+Raw TSETMC data must not be spread throughout the application.
+
+19. FINANCIAL DATA CANONICALIZATION
+
+Codal flow:
+
 Raw Codal
-    ↓
+        ↓
 Codal Adapter
-    ↓
-Codal Parser
-    ↓
-Financial Mapping
-    ↓
+        ↓
+Report Retrieval
+        ↓
+Report Selection
+        ↓
+Period Classification
+        ↓
+Financial Parser
+        ↓
 Canonical Financial Data
-    ↓
-Financial Domain Model
-30. CANONICAL DATA PRINCIPLE
+        ↓
+Company / Financial Domain
 
-داده خام External نباید مستقیماً در کل سیستم پخش شود.
+Each stage must have a defined responsibility.
 
-هر External Adapter باید داده را به مدل استاندارد تبدیل کند.
+Raw Codal structures must not be directly consumed by unrelated layers.
 
-31. CANONICAL MODEL
+20. EXTERNAL ADAPTER RULE
 
-Canonical Model باید:
+Every external Adapter is responsible for converting external raw data into a stable internal representation.
 
-مستقل از منبع خارجی باشد.
-پایدار باشد.
-قابل تست باشد.
-قابل استفاده توسط چند Consumer باشد.
+An Adapter should not:
 
-Consumer نباید مجبور باشد ساختار خام Codal یا TSETMC را بشناسد.
+Perform unrelated valuation.
+Perform unrelated forecasting.
+Generate final reports.
+Contain duplicated business logic.
 
-32. ENTRY POINT
+Adapters should isolate external data formats from the domain layer.
 
-Entry Point اصلی پروژه باید مشخص باشد.
+21. CODAL REPORT SELECTION RULE
 
-هدف نهایی:
+The Codal report-selection system must distinguish:
 
-main.py
+Annual Reports.
+Interim Reports.
+Quarterly Reports.
+Other relevant financial reports.
 
-یا Entry Point معادل:
+The selection mechanism must be deterministic.
 
-Input Symbol
-    ↓
-Market Data
-    ↓
-Financial Data
-    ↓
-Canonical Domain
-    ↓
-Forecast
-    ↓
-Analysis
-    ↓
-Valuation
-    ↓
-Risk
-    ↓
-Report
-33. MAIN.PY RULE
+Report selection must not depend on fragile assumptions when reliable metadata is available.
 
-main.py باید تا حد امکان Thin باشد.
+Report classification must have one canonical responsibility.
 
-نباید محل اصلی:
+22. FINANCIAL ANALYSIS PERIOD RULE
 
-Business Logic
-Financial Mapping
-Forecast Logic
-Valuation Formula
-Parsing
+Primary financial analysis is based on:
 
-باشد.
+Latest Valid New Codal Report
 
-وظیفه اصلی:
+Older reports are used for:
 
-Orchestration.
+Comparison.
+Trend.
+Growth.
+Quality Checks.
 
-34. CORE ENGINE RULE
+Five-year trend analysis is currently outside Scope.
 
-تا زمانی که Dependency Flow کامل بررسی نشده:
+The primary financial analysis focuses on a one-year financial period unless the active architecture explicitly requires another period.
 
-core/analyzer_engine.py
+23. FORECAST RULE
 
-نباید بازنویسی گسترده شود.
+Forecasting must use real financial data whenever possible.
 
-ابتدا:
+The Forecast layer must consider:
 
-Import Graph
-Call Graph
-Data Flow
-Consumer Map
+Non-recurring profit.
+Asset sales.
+Non-operating income.
+Bank interest.
+Dividend income.
+Sudden margin changes.
+Performance decline.
 
-بررسی شود.
+Non-operating income must not automatically be treated as sustainable.
 
-35. FINANCIAL ANALYSIS BASIS
+It may be included in sustainable Forecast only when there is evidence of recurrence.
 
-مبنای اصلی تحلیل:
+24. VALUATION RULE
 
-آخرین گزارش معتبر و جدید Codal.
-
-گزارش‌های قدیمی برای:
-
-Trend
-Growth
-Comparison
-Quality Check
-
-استفاده می‌شوند.
-
-36. FIVE-YEAR TREND RULE
-
-روند پنج‌ساله فعلاً خارج از Scope است.
-
-نباید خودسرانه وارد پروژه شود.
-
-اگر در آینده لازم شد:
-
-باید به‌عنوان Feature یا Scope Change ثبت شود.
-
-37. PRIMARY ANALYSIS PERIOD
-
-تمرکز اصلی:
-
-دوره مالی یک‌ساله.
-
-داده‌های کوتاه‌تر می‌توانند برای:
-
-Trend
-Seasonality
-Risk
-Momentum
-
-استفاده شوند.
-
-اما مبنای اصلی تحلیل باید با آخرین گزارش معتبر سازگار باشد.
-
-38. TSETMC P/E RULE
-
-P/E آماده TSETMC استفاده نشود.
-
-محاسبه:
-
-Forward P/E =
-Market Value / Forecasted Net Profit
-39. TSETMC DATA
-
-TSETMC برای:
-
-Symbol
-Company Name
-Instrument Code
-Last Price
-Closing Price
-Shares
-Market Value
-
-استفاده شود.
-
-40. MARKET VALUE
-
-Market Value باید از داده بازار یا محاسبه معتبر به دست آید.
-
-در صورت نیاز:
-
-Market Value =
-Price × Shares
-
-واحدها باید مشخص و یکسان باشند.
-
-41. FORECAST PRINCIPLE
-
-Forecast باید تا حد امکان بر اساس داده واقعی باشد.
-
-نباید صرفاً با یک ضریب ثابت و بدون بررسی کیفیت سود انجام شود.
-
-42. NON-RECURRING INCOME
-
-باید شناسایی شود:
-
-فروش دارایی
-سود غیرعادی
-درآمد یک‌باره
-سود تسعیر غیرتکرارشونده
-سایر درآمدهای غیرتکراری
-
-این موارد نباید بدون بررسی وارد سود پایدار Forecast شوند.
-
-43. NON-OPERATING INCOME
-
-موارد:
-
-سود بانکی
-سود سهام
-درآمد سرمایه‌گذاری
-فروش دارایی
-
-باید بررسی شوند.
-
-فقط در صورت وجود شواهد تکرارشوندگی، در Forecast پایدار لحاظ شوند.
-
-44. MARGIN RISK
-
-کاهش ناگهانی و معنادار Margin باید بررسی شود.
-
-علل احتمالی:
-
-کاهش قیمت فروش
-افزایش هزینه
-کاهش حجم فروش
-تغییر Product Mix
-هزینه غیرعادی
-
-نباید صرفاً با یک Threshold ساده تصمیم‌گیری شود.
-
-45. SALES DECLINE RULE
-
-اگر فروش سه ماه متوالی کاهش داشته باشد:
-
-Fundamental Stop-Loss Warning
-
-ممکن است فعال شود.
-
-این Warning باید بر اساس داده معتبر دوره‌ای محاسبه شود.
-
-46. PROFIT MARGIN RISK
-
-کاهش ناگهانی و معنادار Margin:
-
-Fundamental Risk Warning
-
-ایجاد می‌کند.
-
-47. HOLDING / INVESTMENT COMPANY RULE
-
-برای شرکت‌های سرمایه‌گذاری و هلدینگ‌ها:
-
-ریسک باید با توجه به شرکت‌های تابعه مهم بررسی شود.
-
-اگر چند شرکت تابعه مهم وارد وضعیت Stop-Loss شوند:
-
-ریسک شرکت مادر باید افزایش یابد.
-
-48. VALUATION METRICS
-
-شاخص‌های اصلی:
+Primary valuation metrics:
 
 Forward P/E
 Forward P/S
 Forward P/D
 P/A
 P/B
-49. VALUATION FORMULAS
-P/E =
+
+Formulas:
+
+P/E = Market Value / Forecasted Net Profit
+
+P/S = Market Value / Forecasted Sales
+
+P/A = Market Value / Total Assets
+
+P/B = Market Value / Equity
+
+The system must not blindly use TSETMC's P/E as the project's calculated Forward P/E.
+
+25. TSETMC P/E RULE
+
+TSETMC P/E is not the canonical valuation P/E.
+
+The system calculates:
+
+Forward P/E =
 Market Value / Forecasted Net Profit
-P/S =
-Market Value / Forecasted Sales
-P/A =
-Market Value / Total Assets
-P/B =
-Market Value / Equity
 
-P/D باید بر اساس تعریف دقیق Dividend مورد استفاده پروژه محاسبه شود.
+TSETMC may provide market information.
 
-50. P/A AND P/B WARNING
+The project's own valuation logic must use the canonical financial and forecast data.
 
-اگر P/A یا P/B بالا باشد:
+26. BASE CASE VALUATION RULE
 
-احتمال عدم تجدید ارزیابی دارایی‌ها باید بررسی شود.
-
-این یک Warning تحلیلی است، نه نتیجه قطعی.
-
-51. BASE PE
-
-برای Base Case:
+A base-case PE of:
 
 PE = 7
 
-قابل استفاده است.
+may be used as a Base Case unless the active architecture defines a different validated assumption.
 
-اما اگر Architecture جدید منطق دیگری تعریف کرده باشد:
+This is a valuation assumption.
 
-Architecture جدید اولویت دارد.
+It must not be duplicated throughout the codebase.
 
-52. ANALYSIS VS VALUATION
+27. ASSET VALUATION RULE
 
-Analysis و Valuation نباید یکی باشند.
+High P/A or P/B may be affected by:
 
-Analysis:
+Unrecognized asset revaluation.
+Historical book values.
+Accounting valuation differences.
 
-کیفیت سود
-رشد
-ریسک
-عملکرد
+The system should identify this as an analytical consideration.
 
-Valuation:
+28. FUNDAMENTAL RISK RULES
 
-P/E
-P/S
-P/B
-P/A
-P/D
-53. RISK ENGINE
+If sales decline for three consecutive months:
 
-Risk باید خروجی ساختاریافته داشته باشد.
+Fundamental Stop-Loss Warning
 
-مثال:
+may be activated.
 
-RiskLevel
-RiskType
-Severity
-Reason
-Evidence
-54. WARNING VS ERROR
+If profit margin suddenly and materially declines:
 
-Warning:
+Fundamental Risk Warning
 
-سیستم می‌تواند ادامه دهد.
+must be considered.
 
-Error:
+These warnings are analytical signals.
 
-سیستم نمی‌تواند نتیجه معتبر تولید کند.
+They must not automatically be treated as trading commands without additional context.
 
-این دو نباید مخلوط شوند.
+29. HOLDING COMPANY RULE
 
-55. ERROR HANDLING
+For investment companies and holdings:
 
-خطاها باید:
+Fundamental risk analysis should consider major subsidiaries.
 
-قابل تشخیص
-قابل ثبت
-قابل Debug
-قابل تست
+If multiple significant subsidiaries trigger fundamental Stop-Loss conditions:
 
-باشند.
+The parent company's risk status may increase.
 
-ممنوع:
+This logic must be implemented in the appropriate Analysis/Risk layer.
 
-except:
-    pass
+It must not be duplicated in individual parsers.
 
-مگر با دلیل بسیار مشخص.
+30. TESTING HIERARCHY
 
-56. LOGGING
+Preferred test order:
 
-Logging باید:
+1. Unit Test
+2. Component Test
+3. Integration Test
+4. End-to-End Test
 
-قابل کنترل
-سطح‌بندی شده
-معنی‌دار
+Not every change requires all four levels.
 
-باشد.
+The required test level depends on the change.
 
-سطوح:
+Major pipeline changes should reach Integration or End-to-End testing.
 
-DEBUG
-INFO
-WARNING
-ERROR
-CRITICAL
-57. DEBUG OUTPUT
+31. TEST EVIDENCE RULE
 
-Debug Output نباید با Final Report مخلوط شود.
+A test is considered successful only when there is evidence.
 
-برای Debug:
+Evidence may include:
 
-DEBUG
+Test output.
+Assertion result.
+Application output.
+PowerShell output.
+CI result.
 
-برای User:
+The assistant must not claim:
 
-REPORT
-58. OUTPUT CONTRACT
+TEST PASSED
 
-Final Report باید ساختار مشخص داشته باشد.
+without evidence.
 
-مثلاً:
+32. POWERSHELL WAITING RULE
 
-Company Identity
-Market Data
-Financial Summary
-Forecast
-Analysis
-Risk
-Valuation
-Conclusion
-59. NO HIDDEN LOGIC
+When the assistant asks the user to execute a PowerShell command:
 
-Business Logic نباید در:
+STATUS = WAITING_FOR_USER
 
-print
-formatting
-UI
-CLI
+The assistant must:
 
-پنهان شود.
+Wait for the result.
+Not repeat the same operation.
+Not assume success.
+Not assume failure.
+Not start an unrelated task.
+Not create a new Checkpoint merely because the conversation continued.
 
-60. TYPE SAFETY
+When the result arrives:
 
-در صورت امکان:
+Analyze.
+Determine outcome.
+Continue.
+Update Checkpoint if state changed.
+33. USER ACTION RULE
 
-Type Hints
-Dataclasses
-Explicit Models
+Every user action request must contain:
 
-استفاده شود.
+Exact command.
+Expected output.
+Reason for execution.
 
-61. DATA VALIDATION
+The user must not be asked to perform vague operations.
 
-داده ورودی باید Validate شود.
+34. CODE DELIVERY RULE
 
-موارد:
+When the user requests a code change:
 
-Missing Values
-Negative Values
-Unit Mismatch
-Currency Mismatch
-Period Mismatch
-Duplicate Records
-62. UNIT CONSISTENCY
+The assistant must provide:
 
-واحدهای:
+COMPLETE
+INTEGRATED
+REPLACEMENT-READY
+FILE
 
-ریال
-تومان
-میلیون
-میلیارد
+Do not provide:
 
-باید صریح باشند.
+Partial snippets.
+Fragmented patches.
+Incomplete sections.
 
-تبدیل واحد باید در یک لایه مشخص انجام شود.
+Unless the user explicitly asks for a patch or diff.
 
-63. DATE CONSISTENCY
+35. CODE COMPATIBILITY RULE
 
-تاریخ‌ها باید استاندارد شوند.
+Any replacement file must be compatible with:
 
-گزارش‌ها باید دارای:
+Active architecture.
+Existing imports.
+Existing models.
+Existing call sites.
+Existing data structures.
 
-Fiscal Period
-Report Date
-Publication Date
+Before replacing a file:
 
-باشند.
+Inspect callers.
+Inspect imports.
+Inspect dependencies.
+Inspect expected interfaces.
+Preserve compatible behavior unless intentionally changing it.
+36. FILE REPLACEMENT SAFETY
 
-64. PERIOD COMPARISON
+Before replacing a major file:
 
-مقایسه دوره‌ها باید:
+Identify its callers.
+Identify its imports.
+Identify its outputs.
+Identify its dependencies.
+Identify its tests.
 
-هم‌دوره
-هم‌واحد
-هم‌تعریف
+Do not replace a major file merely because it appears poorly structured.
 
-باشد.
+37. ARCHITECTURE REWRITE RULE
 
-65. FINANCIAL MAPPING
+Do not rewrite the entire architecture because:
 
-Financial Mapping یکی از حساس‌ترین بخش‌های پروژه است.
+One module has bugs.
+One parser is incomplete.
+One calculation is wrong.
+One integration fails.
 
-Mapping باید:
+A rewrite is justified only when:
 
-قابل تست
-قابل Trace
-قابل Debug
+Existing architecture is fundamentally unsalvageable.
+Dependency structure prevents reliable maintenance.
+Duplication is systemic.
+Data flow is fundamentally broken.
+A documented architectural decision approves the rewrite.
+38. CORE ANALYZER ENGINE RULE
 
-باشد.
+Until Active Architecture is fully verified:
 
-66. MAPPING TRACEABILITY
+core/analyzer_engine.py
 
-هر مقدار مالی باید قابل ردیابی باشد:
+must not be rewritten blindly.
 
-Source Row
-→ Source Label
-→ Canonical Concept
-→ Domain Field
-67. MAPPING FALLBACK
+Before changing it:
 
-Fallback Mapping باید کنترل‌شده باشد.
+Map imports.
+Map callers.
+Map data flow.
+Map dependencies.
+Identify Active responsibilities.
+Identify Legacy responsibilities.
+Determine whether refactoring is necessary.
+39. REPOSITORY AUDIT RULE
 
-نباید با حدس نامطمئن داده اشتباه به Concept اشتباه متصل شود.
+A Repository Audit must be performed only when:
 
-68. MAPPING CONFIDENCE
+Starting a new major phase.
+Recovering from unknown state.
+Investigating architecture.
+Investigating duplication.
+Investigating a systemic defect.
 
-در صورت امکان Mapping باید Confidence داشته باشد:
+A completed Audit must not be restarted automatically.
 
-HIGH
-MEDIUM
-LOW
+If an Audit was already completed:
 
-Mapping کم‌اطمینان باید قابل مشاهده باشد.
+Continue from the Audit's resulting Task.
 
-69. PARSER RESPONSIBILITY
+Do not return to Audit unless new evidence requires it.
 
-Parser فقط باید داده را استخراج کند.
+40. RUNNING APP REQUEST RULE
 
-Parser نباید Forecast یا Valuation انجام دهد.
+If the previous Task was:
 
-70. ADAPTER RESPONSIBILITY
+Running app request
 
-Adapter:
+and it is still recorded as:
 
-اتصال
-دریافت
-تبدیل اولیه
+IN PROGRESS
 
-را انجام می‌دهد.
+the assistant must continue that Task.
 
-Business Logic نباید در Adapter قرار گیرد.
+It must not automatically:
 
-71. FORECAST RESPONSIBILITY
+Start another Audit.
+Rebuild architecture.
+Start a new feature.
+Return to the beginning.
 
-Forecast Engine:
+If the status cannot be verified:
 
-داده تاریخی
-کیفیت داده
-Trend
-Recurrence
+Check PROJECT_CONTROL.md.
+Check BA-CHECKPOINT.md.
+Check GitHub.
+Check latest commits.
+Report actual status.
+Do not guess.
+41. GITHUB VERIFICATION RULE
 
-را بررسی می‌کند.
+When GitHub access is available, the assistant should verify:
 
-72. ANALYSIS RESPONSIBILITY
+Repository.
+Branch.
+Latest commit.
+Recent relevant commits.
+Current file structure.
+Relevant active files.
+Relevant documentation.
 
-Analysis Engine:
+The assistant must not rely only on copied code from the user when the repository itself is accessible.
 
-رشد
-سودآوری
-ریسک
-کیفیت عملکرد
+42. BRANCH RULE
 
-را تحلیل می‌کند.
+The current branch must always be known before significant work.
 
-73. VALUATION RESPONSIBILITY
+Never assume:
 
-Valuation Engine:
+master
+main
+develop
 
-محاسبه شاخص‌های ارزش‌گذاری.
+or any other branch.
 
-74. REPORT RESPONSIBILITY
+The assistant must verify the actual branch.
 
-Report Layer:
+43. COMMIT RULE
 
-نتیجه نهایی را نمایش می‌دهد.
+Important project milestones should be committed.
 
-75. NO PARALLEL IMPLEMENTATION
+Commit messages should be:
 
-قبل از ایجاد ماژول جدید:
+Clear.
+Specific.
+Related to the actual change.
 
-بررسی شود آیا مسئولیت مشابه قبلاً وجود دارد.
+Do not create meaningless commits.
 
-اگر وجود دارد:
+44. PUSH VERIFICATION RULE
 
-ماژول جدید ایجاد نشود.
+A successful local Commit does not mean GitHub was updated.
 
-76. REFACTOR RULE
+After pushing:
 
-Refactor باید:
+Verify:
 
-کوچک
-مرحله‌ای
-قابل تست
+Branch
+Remote
+Commit
 
-باشد.
+A command such as:
 
-Refactor بزرگ بدون Checkpoint ممنوع.
+git push
 
-77. BIG BANG REWRITE RULE
+must be interpreted according to its actual output.
 
-بازنویسی کامل فقط زمانی مجاز است که:
+45. DOCUMENTATION CONSISTENCY RULE
 
-Architecture فعلی بررسی شده باشد.
-Dependency Flow مشخص باشد.
-Active / Legacy مشخص باشد.
-Data Contract مشخص باشد.
-Rollback ممکن باشد.
-Test Baseline موجود باشد.
-78. REWRITE STRATEGY
+Control documents must remain consistent with actual repository state.
 
-در صورت نیاز به بازنویسی:
+If a document says:
 
-ترجیح:
+Task = IN PROGRESS
 
-Strangler Pattern
+but the code and tests prove the Task is complete:
 
-یعنی:
+The document must be updated.
 
-Old Component
-    ↓
-New Component
-    ↓
-Validation
-    ↓
-Switch Active Path
-79. TESTING PYRAMID
+If a document says:
 
-ترتیب:
+Task = COMPLETED
 
-Unit
-Component
-Integration
-End-to-End
-80. TEST RULE
+but the code is not actually complete:
 
-هر تغییر مهم باید تست شود.
+The Task must not be treated as completed.
 
-اگر تست انجام نشده:
+Actual verification takes priority.
 
-نباید وضعیت:
+46. CHECKPOINT PROTOCOL
 
-COMPLETED
+At meaningful project-state changes, create or update a Checkpoint.
 
-ثبت شود.
+Checkpoint must include:
 
-می‌تواند:
-
-IMPLEMENTED
-WAITING FOR TEST
-
-باشد.
-
-81. POWERSHELL WAITING
-
-اگر کاربر باید دستور PowerShell اجرا کند:
-
-تا نتیجه دریافت نشده:
-
-موفقیت فرض نشود.
-شکست فرض نشود.
-همان کار تکرار نشود.
-Checkpoint جدید ساخته نشود.
-82. USER ACTION
-
-اگر اقدام کاربر لازم است:
-
-دستور دقیق ارائه شود.
-
-مثال:
-
-python main.py درهآور
-83. TEST EVIDENCE
-
-نتیجه تست باید ثبت شود:
-
-Command
-Input
-Output
-Expected
-Actual
-Status
-84. REGRESSION TEST
-
-هر اصلاح مهم باید بررسی کند:
-
-آیا قابلیت قبلی شکسته است؟
-
-85. RUNTIME EVIDENCE
-
-خروجی واقعی برنامه معتبرتر از فرضیات است.
-
-اما Runtime Output باید با Code و Test مقایسه شود.
-
-86. NO ASSUMPTION RULE
-
-هرگز نگوییم:
-
-احتمالاً درست است
-
-و آن را به‌عنوان:
-
-Verified
-
-ثبت نکنیم.
-
-87. PROGRESS PERCENTAGE
-
-درصد پیشرفت فقط تخمینی است.
-
-نباید ساختگی باشد.
-
-درصد باید بر اساس:
-
-Scope
-Completed Tasks
-Remaining Tasks
-Architecture Maturity
-Test Coverage
-
-تخمین زده شود.
-
-88. CHECKPOINT SYSTEM
-
-Checkpoint قلب سیستم Continuity است.
-
-هر تغییر مهم باید Checkpoint داشته باشد.
-
-89. CHECKPOINT ID
-
-فرمت:
-
-BOURSE-XXXX
-
-یا:
-
-BOURSE-YYYYMMDD-XXX
-90. CHECKPOINT CONTENT
-
-هر Checkpoint باید شامل:
-
-ID
+CHECKPOINT ID
 DATE
-PHASE
-CURRENT STATE
-LAST COMPLETED
+PROJECT PHASE
 CURRENT TASK
-ACTIVE ARCHITECTURE
-LEGACY
+TASK STATUS
+LAST COMPLETED WORK
 CHANGED FILES
-TEST STATUS
+ACTIVE ARCHITECTURE
+LEGACY / ARCHIVE
+TESTS PERFORMED
+TEST RESULTS
 KNOWN ISSUES
 ARCHITECTURAL DECISIONS
+START CHECKPOINT
+COMPLETION CRITERIA
 NEXT STEP
-PRIORITY
+NEXT STEP PRIORITY
 USER ACTION
-91. NEXT STEP RULE
+CONTINUATION COMMAND
+47. CHECKPOINT UPDATE EXCEPTION
 
-هر Checkpoint فقط یک Next Step اصلی داشته باشد.
+If the assistant is only waiting for PowerShell output:
 
-نه چند مسیر موازی.
+Do not create a new Checkpoint.
 
-92. PRIORITY
+The previous Checkpoint remains valid.
 
-اولویت‌ها:
+When the result arrives:
 
-P0 = Blocker / Critical
-P1 = High
-P2 = Normal
-P3 = Low
-93. TASK BLOCKER
+Analyze it.
+Continue.
+Update Checkpoint if state changes.
+48. RECOVERY PROTOCOL
 
-اگر Task Blocked است:
+If project continuity cannot be recovered from conversation:
 
-دلیل دقیق ثبت شود.
+Perform:
 
-94. DECISION LOG
-
-تصمیم‌های معماری مهم باید ثبت شوند.
-
-مثال:
-
-Decision ID
-Date
-Problem
-Options
-Decision
-Reason
-Consequences
-95. ARCHITECTURAL DECISION RULE
-
-تصمیم معماری نباید فقط در چت باقی بماند.
-
-باید وارد Repository شود.
-
-96. ROADMAP RULE
-
-Roadmap باید:
-
-مرحله‌ای
-اولویت‌بندی شده
-قابل اندازه‌گیری
-
-باشد.
-
-97. ROADMAP UPDATE
-
-پس از تکمیل هر Phase:
-
-Roadmap به‌روزرسانی شود.
-
-98. CURRENT STATE
-
-Current State باید وضعیت واقعی فعلی را نشان دهد.
-
-نه هدف آینده را.
-
-99. ARCHITECTURE DOCUMENT
-
-Architecture باید:
-
-Componentها
-Data Flow
-Dependency Flow
-Active Modules
-
-را نشان دهد.
-
-100. ACTIVE ARCHITECTURE MAP
-
-باید مشخص کند:
-
-ENTRY POINT
-↓
-ORCHESTRATOR
-↓
-ADAPTERS
-↓
-PARSERS
-↓
-MAPPERS
-↓
-DOMAIN
-↓
-FORECAST
-↓
-ANALYSIS
-↓
-VALUATION
-↓
-RISK
-↓
-REPORT
-101. DEPENDENCY FLOW
-
-Dependency باید تا حد امکان یک‌طرفه باشد.
-
-لایه بالاتر نباید به جزئیات داخلی لایه پایین وابستگی غیرضروری داشته باشد.
-
-102. CIRCULAR DEPENDENCY
-
-Circular Dependency باید شناسایی و حذف یا مستندسازی شود.
-
-103. GLOBAL STATE
-
-Global Mutable State باید تا حد امکان حذف شود.
-
-104. SIDE EFFECTS
-
-Side Effect باید مشخص باشد.
-
-مثلاً:
-
-Network
-File I/O
-Database
-Cache
-105. PURE LOGIC
-
-Business Logic ترجیحاً Pure باشد.
-
-106. CACHING
-
-Cache نباید باعث شود داده قدیمی به‌عنوان داده جدید استفاده شود.
-
-Cache باید:
-
-TTL
-Source
-Timestamp
-
-داشته باشد.
-
-107. NETWORK RESILIENCE
-
-External Request باید:
-
-Timeout
-Retry
-Error Handling
-
-داشته باشد.
-
-108. EXTERNAL SOURCE FAILURE
-
-اگر Codal یا TSETMC در دسترس نیست:
-
-خطای مشخص ایجاد شود.
-
-سیستم نباید داده جعلی تولید کند.
-
-109. DATA QUALITY
-
-اگر داده ناقص است:
-
-سیستم باید مشخص کند:
-
-Data Quality: LOW
-110. NO SILENT CORRECTION
-
-داده نباید بدون ثبت یا اطلاع، اصلاح شود.
-
-111. FINANCIAL INTEGRITY
-
-اعداد مالی باید:
-
-قابل ردیابی
-قابل تکرار
-قابل بررسی
-
-باشند.
-
-112. REPRODUCIBILITY
-
-یک Input مشخص باید تا حد امکان خروجی قابل تکرار ایجاد کند.
-
-113. VERSIONING
-
-تغییرات مهم باید در Git ثبت شوند.
-
-114. COMMIT RULE
-
-Commit باید:
-
-کوچک
-معنی‌دار
-Atomic
-
-باشد.
-
-115. COMMIT MESSAGE
-
-پیام Commit باید مشخص کند:
-
-چه چیزی تغییر کرده است.
-
-مثال:
-
-fix: stabilize financial mapping
-refactor: separate forecast from valuation
-test: add Codal parser coverage
-docs: update architecture map
-116. BRANCH RULE
-
-Branch باید مشخص باشد.
-
-قبل از کار:
-
-Current Branch
-
-بررسی شود.
-
-117. BRANCH SAFETY
-
-تغییر مستقیم روی Branch اصلی فقط با آگاهی از وضعیت Repository انجام شود.
-
-118. PULL REQUEST
-
-تغییرات بزرگ ترجیحاً از طریق PR بررسی شوند.
-
-119. CI
-
-اگر CI وجود دارد:
-
-باید بررسی شود.
-
-120. FAILED CHECKS
-
-اگر Check شکست خورده:
-
-ابتدا Root Cause مشخص شود.
-
-نباید صرفاً با تغییرات تصادفی Fix شود.
-
-121. ROOT CAUSE RULE
-
-برای هر Bug:
-
-Symptom
-Root Cause
-Fix
-Regression Test
-
-ثبت شود.
-
-122. NO PATCH LOOP
-
-چرخه:
-
-Error
-→ Random Fix
-→ New Error
-→ Another Fix
-
-ممنوع است.
-
-ابتدا Root Cause.
-
-123. DEBUGGING ORDER
-
-ترتیب:
-
-Reproduce
-Observe
-Trace
-Isolate
-Understand
-Fix
-Test
-Regression Test
-124. USER CODE REQUEST
-
-وقتی کاربر درخواست تغییر کد می‌کند:
-
-فایل کامل و یکپارچه قابل جایگزینی ارائه شود.
-
-125. NO PARTIAL CODE
-
-ارائه:
-
-Snippet ناقص
-Patch ناقص
-کد تکه‌ای
-
-برای جایگزینی مستقیم ممنوع است.
-
-126. CODE FILE OUTPUT
-
-اگر فایل کامل درخواست شد:
-
-کل فایل ارائه شود.
-
-نه فقط بخش تغییرکرده.
-
-127. FILE OWNERSHIP
-
-هر فایل باید نقش مشخص داشته باشد.
-
-128. NAMING
-
-نام‌ها باید:
-
-معنی‌دار
-یکنواخت
-قابل جست‌وجو
-
-باشند.
-
-129. DEAD CODE
-
-Dead Code باید شناسایی شود.
-
-اما حذف آن نیازمند بررسی Dependency است.
-
-130. UNUSED IMPORTS
-
-Importهای بدون استفاده حذف شوند.
-
-131. TODO RULE
-
-TODOهای مهم باید به Task تبدیل شوند.
-
-TODOهای بی‌صاحب نباید انباشته شوند.
-
-132. TECHNICAL DEBT
-
-Technical Debt باید ثبت شود.
-
-مثال:
-
-TD-001
-Description
-Impact
-Priority
-Plan
-133. TECHNICAL DEBT PRIORITY
-
-اولویت:
-
-Critical
-High
-Medium
-Low
-134. DEBT PREVENTION
-
-رفع یک مشکل نباید Technical Debt جدید بزرگ ایجاد کند.
-
-135. COMPLEXITY RULE
-
-اگر دو راه‌حل از نظر فنی مشابه هستند:
-
-راه‌حل ساده‌تر ترجیح دارد.
-
-136. YAGNI
-
-چیزی که فعلاً نیاز نیست:
-
-نباید ساخته شود.
-
-137. DRY
-
-کد تکراری باید کاهش یابد.
-
-اما DRY نباید باعث Abstraction مصنوعی شود.
-
-138. KISS
-
-راه‌حل ساده و قابل نگهداری ترجیح دارد.
-
-139. EXPLICIT OVER MAGIC
-
-رفتارهای مهم باید Explicit باشند.
-
-140. NO MAGIC FALLBACK
-
-Fallbackهای مخفی ممنوع.
-
-141. DOCUMENTATION
-
-Documentation باید:
-
-کوتاه
-دقیق
-به‌روز
-
-باشد.
-
-142. DOCUMENTATION DRIFT
-
-اگر کد تغییر کرد و Documentation دیگر درست نیست:
-
-Documentation باید به‌روزرسانی شود.
-
-143. CODE AND DOC CONSISTENCY
-
-کد و مستندات نباید متناقض باشند.
-
-144. CURRENT PROJECT PRINCIPLE
-
-هدف نهایی:
-
-TSETMC
-→ Market Canonical Layer
-
-Codal
-→ Financial Canonical Layer
-
-Canonical Models
-→ Company Domain
-
-Company Domain
-→ Forecast
-
-Forecast
-→ Analysis
-
-Analysis
-→ Valuation
-
-Valuation + Risk Analysis
-→ Final Report
-
-و:
-
-main.py
-→ Clean Entry Point
-→ Pipeline Execution
-→ Final Report
-145. PROJECT CONTROL LOOP
-
-چرخه استاندارد:
-
-CHECK CURRENT STATE
+Repository Verification
         ↓
-VERIFY GITHUB
+Branch Verification
         ↓
-VERIFY CHECKPOINT
+Latest Commit Verification
         ↓
-IDENTIFY ACTIVE TASK
+Control Document Verification
         ↓
-IMPLEMENT ONE STEP
+Checkpoint Verification
         ↓
-TEST
+Active Architecture Verification
         ↓
-VERIFY
-        ↓
-UPDATE CONTROL DOCS
-        ↓
-CREATE CHECKPOINT
-        ↓
-SELECT ONE NEXT STEP
-146. CONTINUATION ALGORITHM
+Task Identification
 
-هنگام دریافت:
+If the exact Task remains unknown:
 
-ادامه BourseAnalyzer از آخرین Checkpoint
+Create:
 
-الگوریتم:
-
-1. Locate latest checkpoint
-2. Verify repository
-3. Verify branch
-4. Verify latest commit
-5. Verify active architecture
-6. Verify current task
-7. Verify latest completed task
-8. Check whether current task is already completed
-9. If incomplete, continue
-10. If complete, verify result
-11. Run required test
-12. Update state
-13. Create checkpoint
-14. Select one next step
-147. IF GITHUB AVAILABLE
-
-اگر GitHub قابل دسترسی است:
-
-دستیار باید خودش وضعیت Repository را بررسی کند.
-
-کاربر نباید مجبور شود:
-
-کل فایل‌ها را Copy کند.
-ساختار پروژه را دوباره توضیح دهد.
-آخرین Commit را دستی اعلام کند.
-
-مگر در موارد استثنا.
-
-148. IF GITHUB UNAVAILABLE
-
-اگر GitHub در دسترس نیست:
-
-ابتدا مشخص شود چه چیزی قابل دسترسی است.
-
-اگر Context کافی وجود دارد:
-
-از آن استفاده شود.
-
-اگر کافی نیست:
-
-Recovery Mode.
-
-149. IF TASK UNKNOWN
-
-اگر Task فعلی مشخص نیست:
-
-نباید Audit کامل را خودکار شروع کرد.
-
-ابتدا گزارش:
-
-CURRENT TASK: UNKNOWN
-EVIDENCE: ...
-
-سپس فقط اقدام لازم برای بازیابی وضعیت.
-
-150. IF RUNNING TASK EXISTS
-
-اگر Task فعال وجود دارد:
-
-همان Task ادامه پیدا کند.
-
-151. IF USER SAYS "CONTINUE"
-
-اگر فقط گفته شود:
-
-ادامه بده
-
-در صورت وجود Checkpoint معتبر:
-
-از آن ادامه داده شود.
-
-152. IF USER OPENS NEW CHAT
-
-چت جدید نباید به معنی شروع پروژه جدید باشد.
-
-اول:
-
-GitHub
-Project Control
-Checkpoint
-
-بررسی شود.
-
-153. MEMORY LIMIT MITIGATION
-
-به دلیل محدودیت حافظه بلندمدت مکالمه:
-
-اطلاعات مهم نباید فقط در Chat باقی بمانند.
-
-اطلاعات مهم باید در Repository ثبت شوند.
-
-154. CHAT AS TEMPORARY CONTEXT
-
-Chat:
-
-Context موقت.
-
-GitHub:
-
-Project Memory.
-
-155. PROJECT MEMORY
-
-Project Memory باید شامل:
-
-Protocol
-Roadmap
-Architecture
-Current State
-Decisions
-Checkpoints
-
-باشد.
-
-156. CHECKPOINT AS SNAPSHOT
-
-Checkpoint باید Snapshot قابل بازیابی باشد.
-
-157. RECOVERY QUALITY
-
-Checkpoint باید آن‌قدر دقیق باشد که یک Developer جدید بتواند پروژه را ادامه دهد.
-
-158. NO ORPHAN TASK
-
-هیچ Task نباید بدون Status باقی بماند.
-
-159. NO ORPHAN DECISION
-
-تصمیم معماری مهم نباید بدون ثبت باقی بماند.
-
-160. NO ORPHAN MODULE
-
-هر Module باید مشخص باشد:
-
-Active
-Legacy
-Experimental
-Deprecated
-161. NO ORPHAN FILE
-
-فایل بدون Owner یا Purpose باید بررسی شود.
-
-162. PROJECT CLEANLINESS
-
-Repository باید به‌مرور تمیز شود.
-
-اما:
-
-Cleanup نباید با Feature Development قاطی شود.
-
-163. CLEANUP TASK
-
-Cleanup باید Task مستقل باشد.
-
-164. REFACTOR VS FEATURE
-
-Refactor:
-
-رفتار را حفظ می‌کند.
-
-Feature:
-
-رفتار جدید اضافه می‌کند.
-
-این دو نباید مخلوط شوند.
-
-165. BUGFIX VS REFACTOR
-
-Bugfix:
-
-رفع رفتار اشتباه.
-
-Refactor:
-
-تغییر ساختار بدون تغییر رفتار.
-
-166. TEST BASELINE
-
-قبل از Refactor بزرگ:
-
-Baseline تست باید ثبت شود.
-
-167. BACKWARD COMPATIBILITY
-
-در صورت امکان رفتارهای معتبر قبلی حفظ شوند.
-
-168. BREAKING CHANGE
-
-Breaking Change باید صریحاً ثبت شود.
-
-169. DATA CONTRACT
-
-تغییر Domain Model باید با Consumerها بررسی شود.
-
-170. API CONTRACT
-
-اگر API وجود دارد:
-
-Contract باید مشخص باشد.
-
-171. MODEL CONTRACT
-
-Canonical Model باید پایدار باشد.
-
-172. MODEL EVOLUTION
-
-تغییر Model باید:
-
-Impact Analysis
-Tests
-Migration
-
-داشته باشد.
-
-173. FINANCIAL MODEL SAFETY
-
-هیچ اصلاح مالی نباید بدون بررسی واحدها و دوره‌ها انجام شود.
-
-174. PROFIT QUALITY
-
-Forecast باید Quality of Earnings را در نظر بگیرد.
-
-175. GROWTH ANALYSIS
-
-Growth باید بر اساس داده قابل مقایسه باشد.
-
-176. REVENUE ANALYSIS
-
-Sales باید:
-
-Current
-Historical
-Forecast
-
-تفکیک شود.
-
-177. PROFIT ANALYSIS
-
-Profit باید:
-
-Reported
-Normalized
-Forecast
-
-تفکیک شود.
-
-178. NORMALIZED PROFIT
-
-سود Normalized نباید با سود Reported اشتباه شود.
-
-179. NON-RECURRING ADJUSTMENT
-
-Adjustmentها باید قابل توضیح باشند.
-
-180. FORECAST TRANSPARENCY
-
-Forecast باید نشان دهد:
-
-Input
-Assumption
-Formula
-Output
-181. VALUATION TRANSPARENCY
-
-Valuation باید قابل محاسبه مجدد باشد.
-
-182. REPORT TRANSPARENCY
-
-Final Report باید قابل Trace باشد.
-
-183. NO FALSE PRECISION
-
-اگر داده تقریبی است:
-
-نباید با Precision کاذب نمایش داده شود.
-
-184. UNKNOWN VALUES
-
-اگر مقدار ناشناخته است:
-
-N/A
-Unknown
-Unavailable
-
-استفاده شود.
-
-صفر نباید جای Unknown قرار گیرد.
-
-185. ZERO VS MISSING
-
-این دو متفاوت‌اند:
-
-0
-
-و:
-
-Missing
-186. NULL HANDLING
-
-Null باید صریح مدیریت شود.
-
-187. VALIDATION FAILURE
-
-اگر داده Validation را رد کرد:
-
-باید Error یا Warning مناسب ایجاد شود.
-
-188. REPORT QUALITY
-
-Report باید:
-
-واضح
-قابل اعتماد
-قابل ردیابی
-
-باشد.
-
-189. FINAL OUTPUT PRINCIPLE
-
-کاربر باید بتواند بفهمد:
-
-What happened?
-Why?
-Based on what data?
-What is forecast?
-What is risk?
-What is valuation?
-190. NO BLACK BOX
-
-تا حد امکان Logic اصلی نباید Black Box باشد.
-
-191. PROJECT MATURITY
-
-مراحل بلوغ:
-
-Code Exists
-↓
-Code Runs
-↓
-Architecture Stable
-↓
-Data Reliable
-↓
-Tests Reliable
-↓
-Output Trustworthy
-↓
-Production Ready
-192. DEFINITION OF DONE
-
-Task زمانی Done است که:
-
-Code complete
-Architecture aligned
-Tests passed
-Regression checked
-Documentation updated if needed
-Checkpoint updated
-
-باشد.
-
-193. PHASE DONE
-
-Phase زمانی Done است که:
-
-تمام Taskهای ضروری آن Phase تکمیل شده باشند.
-
-194. PROJECT DONE
-
-Project زمانی Done است که:
-
-Scope تعریف‌شده تکمیل شده باشد.
-
-نه اینکه تمام قابلیت‌های ممکن جهان اضافه شده باشند.
-
-195. CHANGE CONTROL
-
-هر تغییر مهم باید:
-
-Why?
-What?
-Where?
-Impact?
-Test?
-
-مشخص داشته باشد.
-
-196. ONE STEP POLICY
-
-در هر لحظه:
-
-یک قدم اصلی.
-
-197. NO PARALLEL WORKSTREAMS
-
-مگر با دلیل مشخص.
-
-198. PRIORITY ORDER
-
-ترتیب پیش‌فرض:
-
-P0 Blockers
-↓
-Architecture Integrity
-↓
-Data Integrity
-↓
-Core Correctness
-↓
-Testing
-↓
-Technical Debt
-↓
-Performance
-↓
-Features
-199. ARCHITECTURE BEFORE FEATURES
-
-تا زمانی که Architecture Active تثبیت نشده:
-
-Feature جدید توسعه داده نشود.
-
-200. DATA BEFORE ANALYSIS
-
-داده نادرست:
-
-تحلیل نادرست.
-
-بنابراین:
-
-Data Integrity اولویت دارد.
-
-201. TEST BEFORE CLAIM
-
-بدون تست:
-
-ادعای موفقیت قطعی ممنوع.
-
-202. EVIDENCE BEFORE DECISION
-
-تصمیم باید بر اساس Evidence باشد.
-
-203. NO GUESSING
-
-در صورت نبود Evidence:
-
-Unknown
-
-اعلام شود.
-
-204. PROJECT STATUS REPORT
-
-Status Report باید:
-
-Current Phase
-Progress
-Last Completed
-Current Task
-Blocker
-Next Step
-
-را نشان دهد.
-
-205. CHECKPOINT TEMPLATE
-CHECKPOINT
-ID: BOURSE-XXXX
-
-DATE:
-YYYY-MM-DD
-
-PHASE:
-...
-
-CURRENT STATE:
-...
-
-LAST COMPLETED:
-...
-
-CURRENT TASK:
-...
-
-CHANGED FILES:
-...
-
-ACTIVE ARCHITECTURE:
-...
-
-LEGACY / ARCHIVE:
-...
-
-TEST STATUS:
-...
-
-KNOWN ISSUES:
-...
-
-ARCHITECTURAL DECISIONS:
-...
-
-NEXT STEP:
-...
-
-NEXT STEP PRIORITY:
-P0 / P1 / P2 / P3
-
-USER ACTION:
-PowerShell command / None
-
-CONTINUATION COMMAND:
-«ادامه BourseAnalyzer از آخرین Checkpoint»
-206. RECOVERY CHECKPOINT TEMPLATE
 RECOVERY CHECKPOINT
 
-REPOSITORY:
-...
+The Recovery Checkpoint must state:
 
-BRANCH:
-...
+What is verified.
+What is uncertain.
+What evidence exists.
+What cannot be established.
+What must be checked next.
 
-LATEST COMMIT:
-...
+Never guess.
 
-PROJECT CONTROL FOUND:
-YES / NO
+49. CHAT CHANGE PROTOCOL
 
-ROADMAP FOUND:
-YES / NO
+When a new chat is started:
 
-ARCHITECTURE FOUND:
-YES / NO
+The user should only need to provide:
 
-CURRENT TASK:
-KNOWN / UNKNOWN
+ادامه BourseAnalyzer از آخرین Checkpoint
 
-LAST COMPLETED:
-...
+The assistant should then recover state from the repository and control documents.
 
-ACTIVE ARCHITECTURE:
-...
+If repository access is unavailable:
 
-LEGACY:
-...
+The assistant should use the latest available control documents.
 
-KNOWN ISSUES:
-...
+If neither is available:
 
-EVIDENCE:
-...
+The assistant must explicitly state that project state cannot be verified.
 
-UNCERTAINTIES:
-...
+50. MEMORY LIMITATION COMPENSATION
 
-NEXT STEP:
-...
+Conversational memory is not considered the primary continuity mechanism.
 
-PRIORITY:
-...
-207. PROJECT CONTROL FILES
+The project must compensate for memory limitations through persistent artifacts:
 
-حداقل ساختار پیشنهادی:
+GitHub
+    +
+PROJECT_CONTROL.md
+    +
+BA-CHECKPOINT.md
+    +
+BA-ROADMAP.md
+    +
+BA-ARCHITECTURE.md
 
-/docs
-    BA-MASTER-PROTOCOL-V4.md
-    PROJECT-CONTROL.md
-    PROJECT-ROADMAP.md
-    ARCHITECTURE.md
-    ACTIVE-ARCHITECTURE.md
-    LEGACY-MAP.md
-    DECISIONS.md
-    CHECKPOINTS.md
-    CURRENT-STATE.md
+These documents are the project's external memory system.
 
-ساختار واقعی Repository اولویت دارد.
+The project must remain understandable without relying on one long conversation.
 
-208. DOCUMENT UPDATE ORDER
+51. PROJECT STATE QUESTIONS
 
-بعد از تغییر مهم:
+Before continuing work, the assistant must be able to answer:
 
-Code
-↓
-Tests
-↓
-Current State
-↓
-Architecture
-↓
-Roadmap
-↓
+1. Where are we?
+2. What did we just complete?
+3. What is currently in progress?
+4. Why is it in progress?
+5. What is the next single action?
+
+If any answer is unknown:
+
+VERIFY BEFORE CODING
+52. PROGRESS RULE
+
+Progress percentages must not be fabricated.
+
+Progress should be estimated based on:
+
+Defined Scope.
+Completed Roadmap phases.
+Remaining major work.
+Actual implementation status.
+
+Percentage is informational only.
+
+The real state is represented by:
+
+Task Status
 Checkpoint
+Roadmap Phase
+Completion Criteria
+53. PROJECT ROADMAP PRINCIPLE
 
-فقط فایل‌هایی که واقعاً تغییر کرده‌اند.
+The project roadmap must proceed in controlled phases.
 
-209. CONTROL DOCUMENT CONSISTENCY
+General target sequence:
 
-اگر اسناد با هم تضاد دارند:
+Phase 1
+Repository and Architecture Stabilization
 
-ابتدا وضعیت واقعی Code بررسی شود.
-
-210. GIT AS FINAL EVIDENCE
-
-برای وضعیت Code:
-
-Git مرجع نهایی است.
-
-211. CHAT AS DECISION SOURCE
-
-Chat می‌تواند Decision را ایجاد کند.
-
-اما Decision مهم باید به Repository منتقل شود.
-
-212. NO LOST DECISIONS
-
-هیچ تصمیم مهمی نباید فقط در Chat باقی بماند.
-
-213. PROJECT HANDOFF
-
-اگر پروژه به Developer دیگری منتقل شد:
-
-با مطالعه:
-
-BA-MASTER-PROTOCOL-V4.md
-PROJECT-CONTROL.md
-CURRENT-STATE.md
-ARCHITECTURE.md
-PROJECT-ROADMAP.md
-CHECKPOINTS.md
-
-باید امکان ادامه وجود داشته باشد.
-
-214. AI CONTINUITY
-
-AI باید از Repository برای بازیابی Context استفاده کند.
-
-215. AI MUST NOT PRETEND
-
-اگر اطلاعات در دسترس نیست:
-
-نباید وانمود کند که می‌داند.
-
-216. AI MUST VERIFY
-
-در صورت دسترسی به GitHub:
-
-اطلاعات مهم باید Verify شوند.
-
-217. AI MUST NOT REPEAT AUDIT
-
-اگر Audit قبلاً انجام شده و Repository تغییر اساسی نکرده:
-
-Audit تکرار نشود.
-
-218. AI MUST FOLLOW CURRENT TASK
-
-Task فعلی اولویت دارد.
-
-219. AI MUST NOT EXPAND SCOPE
-
-Scope نباید بدون اجازه تغییر کند.
-
-220. AI MUST PRESERVE ARCHITECTURE
-
-معماری بدون دلیل تغییر نکند.
-
-221. AI MUST TRACK ACTIVE / LEGACY
-
-قبل از تغییر:
-
-Active و Legacy مشخص شوند.
-
-222. AI MUST DETECT DUPLICATION
-
-کدهای تکراری و مسئولیت‌های تکراری باید در Audit بررسی شوند.
-
-223. AI MUST DETECT HARD-CODE
-
-Hard-Codeهای غیرضروری باید شناسایی شوند.
-
-224. AI MUST DETECT ARCHITECTURAL DRIFT
-
-اگر Implementation از Architecture فاصله گرفته:
-
-ثبت شود.
-
-225. AI MUST DETECT DOCUMENTATION DRIFT
-
-اگر Documentation با Code متفاوت است:
-
-ثبت و اصلاح شود.
-
-226. AI MUST DETECT SCOPE DRIFT
-
-اگر پروژه در حال خروج از Scope است:
-
-هشدار داده شود.
-
-227. AI MUST DETECT COMPLEXITY GROWTH
-
-اگر راه‌حل بیش از حد پیچیده شده:
-
-صریحاً اعلام شود.
-
-228. HONEST ENGINEERING RULE
-
-اگر ایده یا راه‌حل ضعیف است:
-
-باید صریحاً گفته شود.
-
-هدف:
-
-ساخت سیستم قابل اعتماد.
-
-نه صرفاً ادامه دادن کدنویسی.
-
-229. CHALLENGE RULE
-
-هر تصمیم مهم باید در صورت نیاز به چالش کشیده شود.
-
-سؤال:
-
-Do we really need this?
-230. NO COSMETIC ARCHITECTURE
-
-صرفاً تغییر نام فایل‌ها Architecture Refactor محسوب نمی‌شود.
-
-231. NO FAKE PROGRESS
-
-تعداد فایل‌های تغییرکرده معیار پیشرفت نیست.
-
-232. REAL PROGRESS
-
-پیشرفت واقعی یعنی:
-
-Correctness
-Reliability
-Maintainability
-Testability
-Architectural Integrity
-233. PROJECT PERCENTAGE
-
-درصد پیشرفت باید بر اساس Scope واقعی باشد.
-
-مثلاً:
-
-Architecture 70%
-Data Layer 80%
-Forecast 60%
-Valuation 70%
-Testing 30%
-
-اما درصدها باید Evidence داشته باشند.
-
-234. NO ARBITRARY PERCENTAGE
-
-درصد ساختگی ممنوع.
-
-235. RELEASE READINESS
-
-قبل از Release:
-
-Tests
-Data Validation
-Error Handling
-Documentation
-Regression
-
-بررسی شوند.
-
-236. PRODUCTION HARDENING
-
-Production Hardening شامل:
-
-Logging
-Error Handling
-Retry
-Timeout
-Validation
-Reproducibility
-
-است.
-
-237. SECURITY
-
-Security باید در تمام مراحل رعایت شود.
-
-238. PERFORMANCE
-
-Performance بعد از Correctness و Architecture اولویت دارد.
-
-239. PREMATURE OPTIMIZATION
-
-Optimization زودهنگام ممنوع.
-
-240. FINAL ARCHITECTURE PRINCIPLE
-
-معماری مطلوب:
-
-External Sources
         ↓
-Adapters
+
+Phase 2
+External Data Adapters
+
         ↓
-Parsers
+
+Phase 3
+Canonical Data Models
+
         ↓
-Canonicalization
+
+Phase 4
+Financial Data Normalization
+
         ↓
-Domain Models
+
+Phase 5
+Forecast Engine
+
         ↓
-Forecast / Normalization
+
+Phase 6
+Analysis Engine
+
         ↓
+
+Phase 7
+Valuation Engine
+
+        ↓
+
+Phase 8
+Risk Analysis
+
+        ↓
+
+Phase 9
+Final Reporting
+
+        ↓
+
+Phase 10
+Testing and Production Hardening
+
+The actual active phase must be defined in PROJECT_CONTROL.md.
+
+54. CURRENT PROJECT PRINCIPLE
+
+The final intended pipeline is:
+
+TSETMC
+    ↓
+Market Canonical Layer
+
+Codal
+    ↓
+Financial Canonical Layer
+
+Canonical Models
+    ↓
+Company Domain
+
+Company Domain
+    ↓
+Forecast
+
+Forecast
+    ↓
 Analysis
-        ↓
+
+Analysis
+    ↓
 Valuation
-        ↓
-Risk
-        ↓
-Report
-241. FINAL CONTINUATION PRINCIPLE
 
-هر زمان کاربر گفت:
+Valuation
+    +
+Risk Analysis
+    ↓
+Final Report
+
+The final entry point should approach:
+
+main.py
+    ↓
+Clean Entry Point
+    ↓
+Main Pipeline
+    ↓
+Final Report
+55. PROJECT QUALITY PRINCIPLE
+
+The goal is not merely:
+
+The application runs.
+
+The goal is:
+
+The application is correct,
+maintainable,
+testable,
+traceable,
+recoverable,
+and architecturally coherent.
+56. ANTI-CHAOS PRINCIPLE
+
+When the project becomes complex:
+
+Do not add more complexity to hide existing complexity.
+
+Instead:
+
+Identify responsibility.
+Identify ownership.
+Identify dependency.
+Identify duplication.
+Identify Active path.
+Identify Legacy path.
+Simplify where safe.
+Test.
+Document.
+57. ANTI-BRANCHING PRINCIPLE
+
+Do not allow multiple competing implementations to remain Active.
+
+For every major responsibility:
+
+One Canonical Active Implementation
+
+is preferred.
+
+Legacy implementations may remain for historical safety.
+
+58. ANTI-REGRESSION PRINCIPLE
+
+Before changing working behavior:
+
+Record current behavior.
+Record current output.
+Record current test result.
+
+After changing:
+
+Re-run the same validation.
+Compare results.
+
+Do not improve one area by silently breaking another.
+
+59. DEBUGGING PRINCIPLE
+
+Debugging must proceed from evidence.
+
+Preferred sequence:
+
+Observed Error
+    ↓
+Reproduce
+    ↓
+Locate Source
+    ↓
+Trace Dependency
+    ↓
+Identify Root Cause
+    ↓
+Apply Minimal Correct Fix
+    ↓
+Test
+    ↓
+Verify No Regression
+
+Do not blindly rewrite code to eliminate an error.
+
+60. ROOT-CAUSE RULE
+
+Fix the root cause whenever possible.
+
+Do not mask errors with:
+
+Random defaults.
+Silent exceptions.
+Broad try/except.
+Hard-coded fallbacks.
+Duplicate logic.
+
+unless the behavior is explicitly intentional and documented.
+
+61. ERROR HANDLING RULE
+
+Errors must not be silently ignored.
+
+If an error is intentionally handled:
+
+The reason must be clear.
+The fallback must be valid.
+The behavior must be testable.
+62. DATA INTEGRITY RULE
+
+Financial data must preserve:
+
+Source.
+Period.
+Unit.
+Currency.
+Sign.
+Date.
+Report type.
+Classification.
+
+Transformations must not silently change financial meaning.
+
+63. FINANCIAL DATA TRACEABILITY
+
+Every important financial output should be traceable to:
+
+Source Report
+    ↓
+Parsed Value
+    ↓
+Canonical Value
+    ↓
+Forecast Input
+    ↓
+Forecast Output
+    ↓
+Valuation
+
+The system should avoid unexplained calculations.
+
+64. REPORT SELECTION TRACEABILITY
+
+The selected Codal report should be explainable.
+
+The system should be able to determine:
+
+Why the report was selected.
+What period it represents.
+Whether it is Annual or Interim.
+Whether it is the latest valid report.
+Whether an older report was rejected and why.
+65. FORECAST TRACEABILITY
+
+Forecast outputs should be traceable to:
+
+Actual financial values.
+Forecast assumptions.
+Adjustments.
+Non-recurring items.
+Recurring/non-recurring classification.
+66. VALUATION TRACEABILITY
+
+Valuation outputs should be traceable to:
+
+Market Value.
+Forecast Sales.
+Forecast Net Profit.
+Assets.
+Equity.
+Valuation assumptions.
+67. NO-HIDDEN-BUSINESS-LOGIC RULE
+
+Important business logic must not be hidden inside:
+
+Parsers.
+API adapters.
+UI code.
+Print statements.
+Utility functions.
+
+Business rules belong in appropriate domain/analysis layers.
+
+68. PRINT-BASED LOGIC RULE
+
+Console output must not be the source of truth for application logic.
+
+Printing is for:
+
+Debugging.
+Reporting.
+Diagnostics.
+
+Not for data storage or business decisions.
+
+69. CONFIGURATION RULE
+
+Configuration should be centralized where appropriate.
+
+Avoid repeating:
+
+URLs.
+Timeouts.
+Thresholds.
+Valuation assumptions.
+Paths.
+External identifiers.
+
+throughout multiple modules.
+
+70. DEPENDENCY RULE
+
+Dependencies must flow in a controlled direction.
+
+Preferred:
+
+External Layer
+    ↓
+Adapter
+    ↓
+Canonical Model
+    ↓
+Domain
+    ↓
+Analysis
+    ↓
+Valuation
+    ↓
+Reporting
+
+Higher-level business logic should not depend directly on raw external structures.
+
+71. CIRCULAR DEPENDENCY RULE
+
+Circular dependencies must be avoided.
+
+If detected:
+
+Map the cycle.
+Identify the architectural cause.
+Refactor the dependency direction.
+Test.
+
+Do not solve circular dependencies with random imports or runtime hacks unless explicitly justified.
+
+72. NEW MODULE RULE
+
+Before adding a module:
+
+Ask:
+
+Does this responsibility already exist?
+
+If yes:
+
+Why is a new module necessary?
+
+If no valid reason exists:
+
+Do not create it.
+
+73. REFACTORING RULE
+
+Refactoring must have a defined objective.
+
+Valid objectives include:
+
+Remove duplication.
+Clarify ownership.
+Reduce coupling.
+Improve testability.
+Fix architectural violation.
+Improve maintainability.
+
+Do not refactor simply because code could look cleaner.
+
+74. BIG-BANG REWRITE RULE
+
+A complete rewrite is allowed only when:
+
+The current system is demonstrably unsalvageable.
+The migration path is defined.
+The new architecture is documented.
+The active path is identified.
+Regression risk is controlled.
+
+Otherwise prefer incremental refactoring.
+
+75. LEGACY MIGRATION RULE
+
+When migrating Legacy code:
+
+Legacy
+    ↓
+Verify
+    ↓
+Extract
+    ↓
+Test
+    ↓
+Migrate
+    ↓
+Mark Legacy
+
+Do not delete Legacy code prematurely.
+
+76. USER CONFIRMATION RULE
+
+User confirmation is required before:
+
+Deleting Legacy files.
+Changing project Scope.
+Replacing the entire architecture.
+Removing major modules.
+Changing major business rules.
+Replacing the primary valuation methodology.
+77. AUTOMATIC DECISION RULE
+
+The assistant may make independent technical decisions when:
+
+They are within current Scope.
+They preserve architecture.
+They reduce duplication.
+They fix a clear bug.
+They improve maintainability.
+They do not alter agreed business rules.
+
+The assistant must not independently make decisions that change the project's strategic direction.
+
+78. PROJECT CONTROL UPDATE RULE
+
+Update PROJECT_CONTROL.md when:
+
+Current Task changes.
+Task Status changes.
+Task is completed.
+Task is blocked.
+Task is paused.
+Scope changes.
+Architecture changes.
+Active/Legacy classification changes.
+Major milestone completes.
+
+Do not update it for every conversation message.
+
+79. CHECKPOINT UPDATE RULE
+
+Update BA-CHECKPOINT.md when:
+
+A meaningful Task step completes.
+A significant code change is verified.
+A test result changes project state.
+A Task is completed.
+A Task is blocked.
+A new Next Step is established.
+
+Do not create a new Checkpoint merely because the assistant sent another message.
+
+80. RECOVERY CHECKPOINT
+
+If continuity is lost:
+
+Create:
+
+RECOVERY CHECKPOINT
+
+It must contain:
+
+WHAT IS VERIFIED
+WHAT IS UNKNOWN
+WHAT WAS LAST COMPLETED
+CURRENT REPOSITORY STATE
+CURRENT BRANCH
+LATEST COMMIT
+CURRENT TASK
+TASK STATUS
+KNOWN ISSUES
+NEXT VERIFICATION STEP
+
+Do not guess missing information.
+
+81. MASTER RECOVERY SEQUENCE
+
+The recovery sequence is:
+
+1. Repository
+2. Branch
+3. Latest Commit
+4. Recent Commits
+5. PROJECT_CONTROL.md
+6. BA-CHECKPOINT.md
+7. BA-ARCHITECTURE.md
+8. BA-ROADMAP.md
+9. Active Code Path
+10. Current Task
+11. Task Status
+12. Next Step
+82. PROJECT CONTINUITY COMMAND
+
+The canonical command is:
 
 ادامه BourseAnalyzer از آخرین Checkpoint
 
-دستیار باید:
+The assistant must interpret this command as:
 
-STOP RESTARTING
-STOP GUESSING
-STOP RE-AUDITING
-CHECK GITHUB
-CHECK CONTROL DOCS
-CHECK CHECKPOINT
-IDENTIFY CURRENT TASK
-CONTINUE EXACTLY FROM THERE
-242. FINAL PROJECT COMMAND
+Resume Existing Work
 
-دستور استاندارد:
+not:
 
-ادامه BourseAnalyzer از آخرین Checkpoint
+Start New Audit
 
-243. FINAL PROJECT RULE
+not:
 
-اگر فقط یک قانون از این پروتکل باقی بماند:
+Restart Project
 
-پروژه را از روی حدس ادامه نده؛ وضعیت واقعی را از GitHub، Control Documents و آخرین Checkpoint بازیابی کن و دقیقاً از همان نقطه ادامه بده.
+not:
 
-244. FINAL ARCHITECTURAL RULE
+Redesign Architecture
+83. FINAL PROJECT GOVERNANCE RULE
 
-تا زمانی که Architecture Active تثبیت نشده:
+When uncertain:
 
-No unnecessary rewrite
-No parallel implementation
-No new feature
-No scope expansion
-No legacy deletion
-245. FINAL ENGINEERING RULE
+VERIFY
 
-هر تغییر باید:
+When duplicate:
 
-Understand
-→ Plan
-→ Implement
-→ Test
-→ Verify
-→ Document
-→ Checkpoint
-246. FINAL CONTINUITY RULE
+CONSOLIDATE
 
-Chat می‌تواند طولانی شود.
+When Legacy:
 
-Memory می‌تواند محدود باشد.
+DO NOT DELETE WITHOUT APPROVAL
 
-Context می‌تواند از بین برود.
+When Task is IN PROGRESS:
 
-اما اگر این پروتکل، Project Control، Architecture، Roadmap و Checkpointها در GitHub به‌روز باشند:
+CONTINUE
 
-پروژه نباید گم شود.
+When Task is complete:
 
-247. FINAL AUTHORITY
-
-این سند:
-
-BA-MASTER-PROTOCOL-V4.md
-
-مرجع اصلی Governance پروژه BourseAnalyzer است.
-
-هر پروتکل قدیمی‌تر:
-
-V1
-V2
-V3
-
-در صورت تعارض با V4 فاقد اولویت است.
-
-248. VERSION CONTROL
-
-Current:
-
-BA-MASTER-PROTOCOL-V4
-
-Previous:
-
-V1
-V2
-V3
-
-Status:
-
-SUPERSEDED
-249. END STATE
-
-هدف نهایی BourseAnalyzer:
-
-یک سیستم تحلیلی مالی تمیز، قابل اعتماد، قابل تست، قابل توسعه و قابل نگهداری که:
-
-داده بازار را از TSETMC دریافت کند.
-داده مالی را از Codal دریافت کند.
-داده‌ها را Canonicalize کند.
-Domain Model استاندارد داشته باشد.
-Forecast قابل توضیح تولید کند.
-سودهای غیرتکرارشونده را تشخیص دهد.
-تحلیل بنیادی انجام دهد.
-ریسک بنیادی را شناسایی کند.
-Stop-Loss بنیادی را بررسی کند.
-Valuation استاندارد تولید کند.
-P/E را مستقل از P/E آماده TSETMC محاسبه کند.
-خروجی قابل ردیابی ارائه دهد.
-و در تمام مسیر دارای Architecture و Control پایدار باشد.
-250. FINAL MASTER FLOW
-USER INPUT
-    ↓
-MAIN ENTRY POINT
-    ↓
-MARKET DATA ADAPTER
-    ↓
-TSETMC CANONICAL MARKET DATA
-    ↓
-CODAL ADAPTER
-    ↓
-CODAL PARSER
-    ↓
-FINANCIAL MAPPING
-    ↓
-CANONICAL FINANCIAL DATA
-    ↓
-COMPANY DOMAIN
-    ↓
-NORMALIZATION
-    ↓
-FORECAST
-    ↓
-FUNDAMENTAL ANALYSIS
-    ↓
-RISK ANALYSIS
-    ↓
-VALUATION
-    ↓
-FINAL REPORT
-    ↓
 CHECKPOINT
-    ↓
-NEXT SINGLE PRIORITY TASK
-251. FINAL CHECKPOINT STANDARD
 
-در پایان هر مرحله‌ای که وضعیت پروژه تغییر می‌کند:
+When blocked:
 
-CHECKPOINT
-ID: BOURSE-XXXX
+DOCUMENT BLOCKER
 
-CURRENT STATE:
-[واقعیت فعلی پروژه]
+When Scope changes:
 
-ACTIVE ARCHITECTURE:
-[مسیر فعال]
+REQUIRE EXPLICIT APPROVAL
 
-LEGACY / ARCHIVE:
-[کدهای قدیمی]
+When code is changed:
 
-COMPLETED:
-[آخرین کار تکمیل‌شده]
+TEST
 
-CURRENT TASK:
-[Task فعال]
+When chat becomes long:
 
-TEST STATUS:
-[وضعیت واقعی تست]
+USE PROJECT CONTROL
 
-KNOWN ISSUES:
-[مشکلات]
+When starting a new chat:
 
-ARCHITECTURAL DECISIONS:
-[تصمیم‌ها]
+RECOVER FROM REPOSITORY + CONTROL DOCUMENTS
+84. FINAL CONTINUITY CONTRACT
 
-NEXT STEP:
-[فقط یک قدم]
+The BourseAnalyzer project must always remain recoverable.
 
-NEXT STEP PRIORITY:
-[P0 / P1 / P2 / P3]
+At any point, the following must be determinable:
 
-USER ACTION:
-[دستور PowerShell یا None]
+WHERE ARE WE?
+WHAT WAS COMPLETED?
+WHAT IS IN PROGRESS?
+WHY ARE WE DOING IT?
+WHAT IS THE NEXT STEP?
 
-CONTINUATION COMMAND:
-«ادامه BourseAnalyzer از آخرین Checkpoint»
-252. FINAL INSTRUCTION TO AI
+The answer must be recoverable from:
 
-هنگام کار روی پروژه BourseAnalyzer:
+GitHub
+PROJECT_CONTROL.md
+BA-CHECKPOINT.md
+BA-ROADMAP.md
+BA-ARCHITECTURE.md
 
-1. وضعیت واقعی را بررسی کن.
-2. حدس نزن.
-3. GitHub را در صورت دسترسی بررسی کن.
-4. آخرین Checkpoint را پیدا کن.
-5. Active و Legacy را جدا کن.
-6. Duplicate Code را بررسی کن.
-7. Duplicate Responsibility را بررسی کن.
-8. Hard-Codeهای غیرضروری را بررسی کن.
-9. Scope را حفظ کن.
-10. Architecture را بدون دلیل تغییر نده.
-11. Task فعلی را ادامه بده.
-12. Audit تکراری انجام نده.
-13. Feature جدید اضافه نکن مگر در Scope.
-14. Root Cause را پیدا کن.
-15. تغییرات را تست کن.
-16. نتیجه تست را بدون Evidence موفق اعلام نکن.
-17. وضعیت پروژه را ثبت کن.
-18. فقط یک Next Step انتخاب کن.
-19. Checkpoint را به‌روز کن.
-20. پروژه را از مسیر اصلی خارج نکن.
-253. MASTER COMMAND
+The project must not depend on the memory of a single conversation.
 
-برای ادامه پروژه:
+The project must not depend on the memory of a single assistant instance.
 
-ادامه BourseAnalyzer از آخرین Checkpoint
+The project must not depend on the user repeatedly reconstructing the project state.
 
-END OF BA-MASTER-PROTOCOL-V4
+The repository and its control documents must preserve continuity.
 
-Protocol Status: FINAL
+85. END OF MASTER PROTOCOL V4
 
-Project: BourseAnalyzer
+BourseAnalyzer
 
-Version: V4
+CONTROLLED
+TRACEABLE
+TESTABLE
+RECOVERABLE
+MAINTAINABLE
 
 END
