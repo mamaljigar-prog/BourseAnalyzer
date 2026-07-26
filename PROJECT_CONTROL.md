@@ -50,7 +50,7 @@ When documentation and actual code disagree:
 
 The standard command for continuing the project is:
 
-> ادامه BourseAnalyzer از آخرین Checkpoint
+>«ادامه BourseAnalyzer از آخرین Checkpoint — Protocol V4 و PROJECT_CONTROL را مبنا قرار بده و وضعیت Task فعلی را از GitHub و آخرین Commit تطبیق بده.»
 
 When this command is received, the assistant must:
 

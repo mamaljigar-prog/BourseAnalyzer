@@ -120,7 +120,7 @@ This document does not replace the current project state.
 
 The standard project continuation command is:
 
-ادامه BourseAnalyzer از آخرین Checkpoint
+«ادامه BourseAnalyzer از آخرین Checkpoint — Protocol V4 و PROJECT_CONTROL را مبنا قرار بده و وضعیت Task فعلی را از GitHub و آخرین Commit تطبیق بده.»
 
 When this command is received, the assistant must not immediately start coding.
 
