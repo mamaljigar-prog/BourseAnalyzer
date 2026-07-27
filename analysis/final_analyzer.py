@@ -9,7 +9,8 @@ class FinalAnalyzer:
         valuation,
         period_type=None,
         duration_months=None,
-        annualization_factor=None
+        annualization_factor=None,
+        growth_analysis=None
     ):
 
         self.company = company
@@ -30,20 +31,10 @@ class FinalAnalyzer:
             annualization_factor
         )
 
-
-    def growth_rate(
-        self,
-        current,
-        forecast
-    ):
-
-        # Forecast سالانه‌شده، رشد قابل مقایسه
-        # با دوره جاری نیست.
-        #
-        # بنابراین این متد دیگر برای محاسبه
-        # رشد Current -> Forecast استفاده نمی‌شود.
-
-        return None
+        self.growth_analysis = (
+            growth_analysis
+            or {}
+        )
 
 
     def debt_to_equity(self):
@@ -90,7 +81,45 @@ class FinalAnalyzer:
             return "High debt"
 
 
+    def growth_status(
+        self,
+        value
+    ):
+
+        if value is None:
+
+            return "Comparable period data not available"
+
+
+        if value > 30:
+
+            return "Strong growth"
+
+
+        if value > 0:
+
+            return "Positive growth"
+
+
+        if value > -20:
+
+            return "Weak decline"
+
+
+        return "Significant decline"
+
+
+
     def generate(self):
+
+        sales_growth = self.growth_analysis.get(
+            "sales_growth"
+        )
+
+        profit_growth = self.growth_analysis.get(
+            "profit_growth"
+        )
+
 
         return {
 
@@ -111,15 +140,13 @@ class FinalAnalyzer:
                         self.forecast_sales
                     ),
 
-                # رشد قابل مقایسه هنوز
-                # از دوره مشابه سال قبل
-                # استخراج نشده است.
-
                 "sales_growth":
-                    None,
+                    sales_growth,
 
                 "sales_growth_status":
-                    "Comparable period data not available"
+                    self.growth_status(
+                        sales_growth
+                    )
 
             },
 
@@ -134,15 +161,13 @@ class FinalAnalyzer:
                         self.forecast_profit
                     ),
 
-                # رشد قابل مقایسه هنوز
-                # از دوره مشابه سال قبل
-                # استخراج نشده است.
-
                 "profit_growth":
-                    None,
+                    profit_growth,
 
                 "profit_growth_status":
-                    "Comparable period data not available",
+                    self.growth_status(
+                        profit_growth
+                    ),
 
                 "net_margin":
                     round(
@@ -167,7 +192,13 @@ class FinalAnalyzer:
 
                     if self.company.sales
 
-                    else 0
+                    else 0,
+
+
+                "margin_change":
+                    self.growth_analysis.get(
+                        "margin_change"
+                    )
 
             },
 
@@ -212,6 +243,10 @@ class FinalAnalyzer:
                     self.debt_to_equity()
 
             },
+
+
+            "growth_analysis":
+                self.growth_analysis,
 
 
             "profit_quality":
