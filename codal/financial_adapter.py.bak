@@ -1,0 +1,704 @@
+from codal.codal_profit_loss_parser import CodalProfitLossParser
+
+
+class FinancialAdapter:
+
+    def __init__(self, url):
+
+        self.url = url
+
+    def report(self):
+
+        parser = CodalProfitLossParser(
+            self.url
+        )
+
+        data = parser.get_financial_data()
+
+        sales_rows = data.get(
+            "sales",
+            []
+        )
+
+        gross_profit_rows = data.get(
+            "gross_profit",
+            []
+        )
+
+        operating_profit_rows = data.get(
+            "operating_profit",
+            []
+        )
+
+        non_operating_income_rows = data.get(
+            "non_operating_income",
+            []
+        )
+
+        net_profit_rows = data.get(
+            "net_profit",
+            []
+        )
+
+        sales = self.extract_value(
+            sales_rows
+        )
+
+        gross_profit = self.extract_value(
+            gross_profit_rows
+        )
+
+        operating_profit = self.extract_value(
+            operating_profit_rows
+        )
+
+        non_operating_income = self.extract_value(
+            non_operating_income_rows
+        )
+
+        net_profit = self.extract_value(
+            net_profit_rows
+        )
+
+        # اگر سود عملیاتی مستقیم در گزارش وجود نداشت،
+        # از سود خالص و درآمد غیرعملیاتی
+        # یک مقدار محافظه‌کارانه استخراج می‌کنیم.
+
+        if (
+            operating_profit == 0
+            and
+            net_profit > 0
+        ):
+
+            operating_profit = (
+                net_profit
+                -
+                non_operating_income
+            )
+
+        # =========================
+        # Fiscal Period Metadata
+        # =========================
+
+        metadata = self.extract_period_metadata(
+
+            sales_rows
+            or
+            net_profit_rows
+            or
+            operating_profit_rows
+            or
+            gross_profit_rows
+            or
+            non_operating_income_rows
+
+        )
+
+        return {
+
+            "sales":
+                sales,
+
+            "gross_profit":
+                gross_profit,
+
+            "operating_profit":
+                operating_profit,
+
+            "non_operating_income":
+                non_operating_income,
+
+            "net_profit":
+                net_profit,
+
+            "report_period_end":
+                metadata.get(
+                    "report_period_end"
+                ),
+
+            "fiscal_year_end":
+                metadata.get(
+                    "fiscal_year_end"
+                ),
+
+            "duration_months":
+                metadata.get(
+                    "duration_months"
+                ),
+
+            "period_type":
+                metadata.get(
+                    "period_type"
+                )
+
+        }
+
+    def extract_value(
+        self,
+        rows
+    ):
+
+        if not rows:
+
+            return 0
+
+        # اولویت با ستون B است.
+        # در ساختار فعلی Codal معمولاً ستون B
+        # مقدار دوره جاری را نگه می‌دارد.
+
+        for row in rows:
+
+            address = str(
+                row.get(
+                    "address",
+                    ""
+                )
+            ).upper()
+
+            if address.startswith(
+                "B"
+            ):
+
+                value = row.get(
+                    "value",
+                    0
+                )
+
+                try:
+
+                    return int(
+                        value
+                    )
+
+                except (
+                    ValueError,
+                    TypeError
+                ):
+
+                    pass
+
+        # Fallback
+        # اگر ستون B مقدار معتبر نداشت،
+        # اولین مقدار عددی معتبر استفاده می‌شود.
+
+        for row in rows:
+
+            value = row.get(
+                "value",
+                0
+            )
+
+            try:
+
+                return int(
+                    value
+                )
+
+            except (
+                ValueError,
+                TypeError
+            ):
+
+                continue
+
+        return 0
+
+    def extract_period_metadata(
+        self,
+        rows
+    ):
+
+        empty_metadata = {
+
+            "report_period_end":
+                None,
+
+            "fiscal_year_end":
+                None,
+
+            "duration_months":
+                None,
+
+            "period_type":
+                None
+
+        }
+
+        if not rows:
+
+            return empty_metadata
+
+        # =========================
+        # 1. Find Current Period
+        # =========================
+
+        current_row = None
+
+        # اولویت با ستون B:
+        # در ساختار فعلی Parser، ستون B
+        # دوره جاری گزارش است.
+
+        for row in rows:
+
+            address = str(
+                row.get(
+                    "address",
+                    ""
+                )
+            ).upper()
+
+            if address.startswith(
+                "B"
+            ):
+
+                report_period_end = (
+                    row.get(
+                        "period"
+                    )
+                )
+
+                fiscal_year_end = (
+                    row.get(
+                        "year"
+                    )
+                )
+
+                if (
+                    report_period_end
+                    or
+                    fiscal_year_end
+                ):
+
+                    current_row = row
+
+                    break
+
+        # Fallback:
+        # اگر ستون B Metadata نداشت،
+        # اولین ردیفی که Metadata دارد انتخاب می‌شود.
+
+        if current_row is None:
+
+            for row in rows:
+
+                if (
+                    row.get(
+                        "period"
+                    )
+                    or
+                    row.get(
+                        "year"
+                    )
+                ):
+
+                    current_row = row
+
+                    break
+
+        if current_row is None:
+
+            return empty_metadata
+
+        report_period_end = (
+            current_row.get(
+                "period"
+            )
+        )
+
+        fiscal_year_end = (
+            current_row.get(
+                "year"
+            )
+        )
+
+        # =========================
+        # 2. Calculate Duration
+        # =========================
+
+        duration_months = (
+            self.calculate_duration_months(
+
+                report_period_end,
+
+                fiscal_year_end
+
+            )
+        )
+
+        # =========================
+        # 3. Classify Period
+        # =========================
+
+        period_type = (
+            self.classify_period(
+                duration_months
+            )
+        )
+
+        return {
+
+            "report_period_end":
+                report_period_end,
+
+            "fiscal_year_end":
+                fiscal_year_end,
+
+            "duration_months":
+                duration_months,
+
+            "period_type":
+                period_type
+
+        }
+
+    def calculate_duration_months(
+        self,
+        report_period_end,
+        fiscal_year_end
+    ):
+
+        if not report_period_end:
+
+            return None
+
+        if not fiscal_year_end:
+
+            return None
+
+        try:
+
+            report_date = (
+                self.parse_date(
+                    report_period_end
+                )
+            )
+
+            fiscal_date = (
+                self.parse_date(
+                    fiscal_year_end
+                )
+            )
+
+            if (
+                report_date is None
+                or
+                fiscal_date is None
+            ):
+
+                return None
+
+            # سال مالی از روز بعد از پایان سال مالی
+            # قبلی شروع می‌شود.
+            #
+            # مثال:
+            #
+            # Fiscal Year End:
+            # 1405/12/29
+            #
+            # Report Period End:
+            # 1405/03/31
+            #
+            # ابتدای سال مالی:
+            # 1405/01/01
+            #
+            # دوره سپری‌شده:
+            # 3 ماه
+            #
+            # برای سال مالی غیر اسفند نیز باید
+            # همین منطق بر اساس ماه پایان سال مالی
+            # اعمال شود.
+
+            fiscal_end_month = (
+                fiscal_date.month
+            )
+
+            report_month = (
+                report_date.month
+            )
+
+            report_year = (
+                report_date.year
+            )
+
+            fiscal_year = (
+                fiscal_date.year
+            )
+
+            # حالت معمول:
+            # گزارش و پایان سال مالی در یک سال شمسی هستند.
+            #
+            # مثال:
+            # Fiscal End = 1405/12/29
+            # Report End = 1405/03/31
+
+            if report_year == fiscal_year:
+
+                if (
+                    report_month
+                    <=
+                    fiscal_end_month
+                ):
+
+                    duration_months = (
+
+                        report_month
+
+                        -
+
+                        1
+
+                    )
+
+                    # اگر گزارش پایان ماه اول سال مالی باشد:
+                    # 1 ماه
+                    #
+                    # اگر گزارش پایان ماه سوم باشد:
+                    # 3 ماه
+
+                    duration_months = (
+                        report_month
+                    )
+
+                    return duration_months
+
+            # حالت سال مالی که از سال تقویمی
+            # قبلی شروع شده و در سال گزارش پایان می‌یابد.
+            #
+            # مثال:
+            # Fiscal End = 1404/06/31
+            # Report End = 1405/03/31
+            #
+            # شروع سال مالی = 1404/07/01
+            #
+            # مدت سپری‌شده تا 1405/03/31 = 9 ماه
+
+            if report_year == (
+                fiscal_year + 1
+            ):
+
+                duration_months = (
+
+                    12
+                    -
+                    fiscal_end_month
+
+                    +
+                    report_month
+
+                )
+
+                if (
+                    duration_months
+                    > 0
+                    and
+                    duration_months
+                    <= 12
+                ):
+
+                    return duration_months
+
+            # حالت محافظه‌کارانه برای
+            # گزارش‌هایی که سال پایان مالی
+            # و گزارش در سال‌های متفاوت قرار گرفته‌اند.
+
+            months = (
+
+                (
+                    report_year
+                    -
+                    fiscal_year
+                )
+                * 12
+
+                +
+
+                (
+                    report_month
+                    -
+                    fiscal_end_month
+                )
+
+            )
+
+            duration_months = (
+                months
+                if months > 0
+                else
+                months + 12
+            )
+
+            if duration_months <= 0:
+
+                return None
+
+            if duration_months > 12:
+
+                duration_months = (
+                    (
+                        duration_months - 1
+                    )
+                    % 12
+                ) + 1
+
+            return duration_months
+
+        except Exception:
+
+            return None
+
+    def parse_date(
+        self,
+        value
+    ):
+
+        if value is None:
+
+            return None
+
+        text = str(
+            value
+        ).strip()
+
+        if not text:
+
+            return None
+
+        # تبدیل ارقام فارسی
+
+        digits = str.maketrans(
+
+            "۰۱۲۳۴۵۶۷۸۹",
+
+            "0123456789"
+
+        )
+
+        text = text.translate(
+            digits
+        )
+
+        # تبدیل ارقام عربی
+
+        arabic_digits = str.maketrans(
+
+            "٠١٢٣٤٥٦٧٨٩",
+
+            "0123456789"
+
+        )
+
+        text = text.translate(
+            arabic_digits
+        )
+
+        # جداکننده‌های رایج
+
+        text = (
+
+            text
+
+            .replace(
+                "-",
+                "/"
+            )
+
+            .replace(
+                ".",
+                "/"
+            )
+
+        )
+
+        parts = text.split(
+            "/"
+        )
+
+        if len(parts) != 3:
+
+            return None
+
+        try:
+
+            year = int(
+                parts[0]
+            )
+
+            month = int(
+                parts[1]
+            )
+
+            day = int(
+                parts[2]
+            )
+
+            if (
+                month < 1
+                or
+                month > 12
+            ):
+
+                return None
+
+            if (
+                day < 1
+                or
+                day > 31
+            ):
+
+                return None
+
+            return SimpleDate(
+
+                year,
+
+                month,
+
+                day
+
+            )
+
+        except (
+            ValueError,
+            TypeError
+        ):
+
+            return None
+
+    def classify_period(
+        self,
+        duration_months
+    ):
+
+        if duration_months is None:
+
+            return None
+
+        if duration_months <= 3:
+
+            return "3M"
+
+        if duration_months <= 6:
+
+            return "6M"
+
+        if duration_months <= 9:
+
+            return "9M"
+
+        return "12M"
+
+
+class SimpleDate:
+
+    def __init__(
+        self,
+        year,
+        month,
+        day
+    ):
+
+        self.year = year
+
+        self.month = month
+
+        self.day = day
