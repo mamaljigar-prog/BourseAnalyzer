@@ -40,7 +40,9 @@ class FinancialAdapter:
 
         return {
 
-            # Canonical structure
+            # =========================
+            # Canonical financial periods
+            # =========================
 
             "current":
                 current,
@@ -52,8 +54,25 @@ class FinancialAdapter:
                 annual,
 
 
+            # =========================
+            # Comparable analysis layer
+            # =========================
+
+            "comparison": {
+
+                "current":
+                    current,
+
+                "previous":
+                    previous
+
+            },
+
+
+            # =========================
             # Compatibility layer
-            # AnalyzerEngine currently consumes these
+            # AnalyzerEngine consumes these
+            # =========================
 
             "sales":
                 current.get(
@@ -61,11 +80,13 @@ class FinancialAdapter:
                     0
                 ),
 
+
             "gross_profit":
                 current.get(
                     "gross_profit",
                     0
                 ),
+
 
             "operating_profit":
                 current.get(
@@ -73,11 +94,13 @@ class FinancialAdapter:
                     0
                 ),
 
+
             "non_operating_income":
                 current.get(
                     "non_operating_income",
                     0
                 ),
+
 
             "net_profit":
                 current.get(
@@ -91,6 +114,7 @@ class FinancialAdapter:
                     "report_period_end"
                 ),
 
+
             "fiscal_year_end":
                 current.get(
                     "fiscal_year_end"
@@ -100,8 +124,10 @@ class FinancialAdapter:
             "period_months":
                 period_months,
 
+
             "duration_months":
                 period_months,
+
 
             "period_type":
                 self.classify_period(
